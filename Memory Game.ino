@@ -120,7 +120,7 @@ void menu() {
           lcd.setBacklight(YELLOW);
           message = "  Leaderboard- Press SELECT or move on";
           scroll_top_row(message, main_menu);
-          lcd.print("Leaderboard     ");
+          lcd.print("  Leaderboard   ");
           reload_scroll = true;
         }
         break;
@@ -129,7 +129,7 @@ void menu() {
           lcd.setBacklight(BLUE);
           message = "Settings- Press SELECT or move on";
           scroll_top_row(message, main_menu);
-          lcd.print("Settings        ");
+          lcd.print("    Settings    ");
           reload_scroll = true;
         }
         break;
