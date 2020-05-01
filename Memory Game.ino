@@ -9,6 +9,8 @@ int mode = 0;
 int menu_state = 0;
 int leaderboard_state = 0;
 int settings_state = 0;
+int username_state = 0;
+int username[] = {65, 65, 65};
 bool button_press = false;
 bool reload_scroll = false;
 
@@ -29,7 +31,7 @@ void setup() {
   Serial.begin(9600);
   lcd.begin(16, 2);
   randomSeed(analogRead(0));
-  //setup_leaderboard(); //Run this line if it's a new arduino
+  setup_leaderboard(); //Run this line if it's a new arduino
 }
 
 void loop() {
@@ -61,7 +63,7 @@ void menu() {
     if (buttons & BUTTON_LEFT) {
       menu_state -= 1;
       Serial.println("Left");
-      if (menu_state < 0) {
+      if (menu_state == (-1)) {
         menu_state = 4;
       }
     }
@@ -316,7 +318,7 @@ void story() {
     if (game_over) {
       lcd.setBacklight(RED);
       lcd.setCursor(0, 0);
-      lcd.print("  COPY:");
+      lcd.print(" COPY:");
       for (int i = 0; i < n; i++) {
         lcd.print(s[i]);
         Serial.print(s[i]);
@@ -332,6 +334,7 @@ void story() {
       delay(4000);
       lcd.clear();
       lcd.setBacklight(BLUE);
+      lcd.setCursor(0, 0);
       lcd.print("SCORE: " + String(score));
 
       //Update Leaderboard
@@ -342,12 +345,20 @@ void story() {
       int new_leaderboard[24];
       for (int i = 3; i < 20; i = i + 4) {
         if (score > leaderboard_list[i]) {
-          new_leaderboard[i-3]= 68;
-          new_leaderboard[i-2]= 73;
-          new_leaderboard[i-1]= 75;
-          new_leaderboard[i]= score;
-          for (int x = i+1; x < 24; x++){
-            new_leaderboard[x]= leaderboard_list[x];
+          lcd.setCursor(0, 1);
+          lcd.print("TOP 5 SCORE!!!");
+          delay(1000);
+          Serial.println("Mode:" + String(mode) + "Menu:" + String(menu_state) + "Leader:" + String(leaderboard_state) + "Sett:" + String(settings_state));
+          //int username[]={65,65,65};
+          //username[]=get_username();
+          get_username();
+          Serial.println("Mode:" + String(mode) + "Menu:" + String(menu_state) + "Leader:" + String(leaderboard_state) + "Sett:" + String(settings_state));
+          new_leaderboard[i - 3] = username[0];
+          new_leaderboard[i - 2] = username[1];
+          new_leaderboard[i - 1] = username[2];
+          new_leaderboard[i] = score;
+          for (int x = i - 3; x < 24; x++) {
+            new_leaderboard[x + 4] = leaderboard_list[x];
           }
           //Write the new leaderboard in
           for (int j = 0; j < 20; j++) {
@@ -355,18 +366,14 @@ void story() {
           }
           break;
         }
-        else{//Copy single entry from old leaderboard to new
-          new_leaderboard[i-3]= leaderboard_list[i-3];
-          new_leaderboard[i-2]= leaderboard_list[i-2];
-          new_leaderboard[i-1]= leaderboard_list[i-1];
-          new_leaderboard[i]= leaderboard_list[i];
-          }
+        else { //Copy single entry from old leaderboard to new
+          new_leaderboard[i - 3] = leaderboard_list[i - 3];
+          new_leaderboard[i - 2] = leaderboard_list[i - 2];
+          new_leaderboard[i - 1] = leaderboard_list[i - 1];
+          new_leaderboard[i] = leaderboard_list[i];
+        }
       }
-      Serial.println(" ");
-
-
-
-      delay(4000);
+      delay(3000);
       lcd.clear();
       mode = 0;
     }
@@ -602,6 +609,106 @@ void scroll_top_row(String top, String bottom) {
     for (int j = index; j < top.length(); j++) {
       lcd.print(top.charAt(j));
     }
+  }
+}
+
+void get_username() {
+  mode = (-2);
+  uint8_t buttons = lcd.readButtons();
+  if (buttons) {
+    if (buttons & BUTTON_DOWN) {
+      username_state += 1;
+      lcd.clear();
+      if (username_state > 3) {
+        username_state = 0;
+      }
+    }
+    if (buttons & BUTTON_UP) {
+      settings_state -= 1;
+      lcd.clear();
+      if (username_state < 0) {
+        username_state = 3;
+      }
+    }
+    if (buttons & BUTTON_RIGHT) {
+      if (username_state == 0) {
+        username[0] += 1;
+        if (username[0] > 90) {
+          username[0] = 16;
+        }
+      }
+      else if (username_state == 1) {
+        username[1] += 1;
+        if (username[1] > 90) {
+          username[1] = 65;
+        }
+      }
+      else if (username_state == 2) {
+        username[2] += 1;
+        if (username[2] > 90) {
+          username[2] = 65;
+        }
+      }
+      else if (username_state == 3) {
+        Serial.println("RETURN1");
+        mode = 5;
+      }
+    }
+    if (buttons & BUTTON_LEFT) {
+      if (username_state == 0) {
+        username[0] -= 1;
+        if (username[0] < 65) {
+          username[0] = 90;
+        }
+      }
+      else if (username_state == 1) {
+        username[1] += 1;
+        if (username[1] > 65) {
+          username[1] = 90;
+        }
+      }
+      else if (username_state == 2) {
+        username[2] -= 1;
+        if (username[2] < 65) {
+          username[2] = 90;
+        }
+      }
+      else if (username_state == 3) {
+        Serial.println("RETURN2");
+        mode = 5;
+      }
+    }
+    button_press = true;
+  }
+  else {
+    button_press = false;
+  }
+  int username[] = {65, 65, 65};
+  switch (username_state) {
+    case (0):
+      lcd.setCursor(0, 0);
+      lcd.print("Username Letter1");
+      lcd.setCursor(0, 1);
+      lcd.print("- <--" + String(char(username[0])) + "--> +");
+      break;
+    case (1):
+      lcd.setCursor(0, 0);
+      lcd.print("Username Letter2");
+      lcd.setCursor(0, 1);
+      lcd.print("- <--" + String(char(username[1])) + "--> +");
+      break;
+    case (2):
+      lcd.setCursor(0, 0);
+      lcd.print("Username Letter3");
+      lcd.setCursor(0, 1);
+      lcd.print("- <--" + String(char(username[2])) + "--> +");
+      break;
+    case (3)://GO BACK
+      lcd.setCursor(0, 0);
+      lcd.print("    DONE?");
+      lcd.setCursor(0, 1);
+      lcd.print("Click left/right");
+      break;
   }
 }
 
