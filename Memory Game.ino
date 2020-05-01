@@ -6,6 +6,7 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 //Used for menu
 int mode = 0;
 int menu_state = 0;
+int settings_state=0;
 bool button_press=false;
 bool reload_scroll=false;
 
@@ -17,12 +18,11 @@ String main_menu = ("L <---Menu---> R");
 
 //Used for gameplay
 String s[] = {}; //Sequence to remember
-int n = 0; //Length of sequence
+int n = 2; //Length of sequence
 String  m[] = {"U", "D", "L", "R"};//Choices in practice mode
 int d=1000;// Time it's shown 
 int t = 5000; //Seconds to answer
 bool game_over = false;
-
 
 void setup() {
   Serial.begin(9600);
@@ -43,8 +43,6 @@ void loop() {
 
 void menu() {
   //RESET VARIABLES
-  n = 0; //Length of sequence
-  t = 5000; //5 Seconds to type in answer
   game_over = false;
   button_press=false;
   
@@ -66,6 +64,7 @@ void menu() {
       }
     }
     if (buttons & BUTTON_SELECT) {
+      lcd.clear();
       Serial.println("Select");
       if (menu_state == 1) { //Practice
         mode = 1; //practe_state
@@ -91,7 +90,7 @@ void menu() {
     switch (menu_state) {
       case (0): //HOME
         lcd.setBacklight(GREEN);
-        lcd.setCursor((-7), 0);
+        lcd.setCursor(0, 0);
         lcd.print("  Memory Game   ");
         lcd.setCursor(0, 1);
         lcd.print("L <---Menu---> R");
@@ -153,7 +152,6 @@ void menu() {
 }
 
 void practice() {
-  lcd.clear();
   Serial.println("Practice");
   index=0;
   String message1 = ("   READ CODE AND REPEAT IT BACK ON ARROWS");
@@ -236,18 +234,222 @@ void practice() {
 }
 
 void story() {
-  lcd.clear();
   Serial.println("Story");
+  index=0;
+  String message1 = ("   READ+REPEAT...BE FAST!");
+  String message2 = ("  GOOD LUCK!!!  ");
+  scroll_top_row(message1, message2);
+  delay(1000);
+
+  //GAMEPLAY
+  n = 4;//Length of sequence
+  d=1000;// 1 second to read, no limit to answer
+  int level=1;
+  int score=0;
+  String s[n];
+  while (game_over == false) {
+    lcd.clear();
+    for (int i = 0; i < n; i++) {
+      long randNumber = random(300);
+      if (randNumber < 75) {
+        s[i] = m[0];
+      }
+      else if (randNumber < 150) {
+        s[i] = m[1];
+      }
+      else if (randNumber < 225) {
+        s[i] = m[2];
+      }
+      else if (randNumber < 300) {
+        s[i] = m[3];
+      }
+    }
+    lcd.setCursor(0, 0);
+    lcd.print("    "+s[0]+" "+s[1]+" "+s[2]+" "+s[3]+"    ");
+    Serial.println("    "+s[0]+" "+s[1]+" "+s[2]+" "+s[3]+"    ");
+    lcd.setCursor(0, 1);
+    //lcd.print("  " + t);
+    delay(d);
+    int get_inputs = 0;
+    String user_attempt[4];
+    while (get_inputs < 4) {
+      lcd.clear();
+      uint8_t buttons = lcd.readButtons();
+      if (buttons) {
+        if (button_press==false){
+          if (buttons & BUTTON_UP) {
+            user_attempt[get_inputs]="U";
+            get_inputs += 1;
+          }
+          if (buttons & BUTTON_DOWN) {
+            user_attempt[get_inputs]="D";
+            get_inputs += 1;
+          }
+          if (buttons & BUTTON_LEFT) {
+            user_attempt[get_inputs]="L";
+            get_inputs += 1;
+          }
+          if (buttons & BUTTON_RIGHT) {
+            user_attempt[get_inputs]="R";
+            get_inputs += 1;
+          }
+          button_press=true;
+        }
+      }
+      else{
+        button_press=false;
+        }
+    }
+    Serial.println("My GUESS: "+user_attempt[0] + user_attempt[1] + user_attempt[2] + user_attempt[3]);
+    if ((user_attempt[0]!=s[0])or (user_attempt[1]!=s[1])or(user_attempt[2]!=s[2])or(user_attempt[3]!=s[3])){
+      lcd.setCursor(0, 0);
+      lcd.print("WRONG- COPY:"+s[0] + s[1] + s[2] + s[3]);
+      lcd.setCursor(0, 1);
+      lcd.print("You said: "+user_attempt[0] + user_attempt[1] + user_attempt[2] + user_attempt[3]);
+      delay(4000);
+      lcd.clear();
+      lcd.print("SCORE: "+ String(score));
+      delay(4000);
+      lcd.clear();
+      game_over=true;
+      mode=0;
+    }
+    else{
+      level+=1;
+      score+=5;
+      lcd.setCursor(0, 0);
+      lcd.print("    CORRECT!    "); 
+      lcd.setCursor(0, 1);
+      Serial.println(" Level: "+String(level));
+      lcd.print("    Level "+String(level)+" !");
+      delay(1200);
+    }
+  }
 }
 
 void leaderboard() {
-  lcd.clear();
   Serial.println("Leaderboard");
 }
 
 void settings() {
-  lcd.clear();
   Serial.println("Settings");
+  //Buttons for settings
+  uint8_t buttons = lcd.readButtons();
+  if (buttons) {
+    if (buttons & BUTTON_DOWN) {
+      settings_state += 1;
+      if (settings_state > 5) {
+        settings_state = 0;
+      }
+    }
+    if (buttons & BUTTON_UP) {
+      settings_state -= 1;
+      if (settings_state < 0) {
+        settings_state = 5;
+      }
+    }
+    if (buttons & BUTTON_RIGHT) {
+      if (settings_state == 1) {
+        n += 1;
+      }
+      else if (settings_state == 2) {
+        n += 1;
+      }
+      else if (settings_state == 3) {
+        d += 1;
+      }
+      else if (settings_state == 4) {
+        t += 1;
+      }
+      else if (settings_state == 5) {
+        mode = 0;
+      }
+    }
+    if (buttons & BUTTON_LEFT) {
+      if (settings_state == 1) {
+        n -= 1;
+        if (n<2){
+          n=2;
+        }
+        else if (n>16){
+          n=16;
+        }
+      }
+      else if (settings_state == 2) {
+        n -= 1;
+        if (n<2){
+          n=2;
+        }
+        else if (n>4){
+          n=4;
+        }
+      }
+      else if (settings_state == 3) {
+        d -= 20;
+        if (d<200){
+          d=200;
+        }
+        else if (d>8000){
+          d=8000;
+        }
+      }
+      else if (settings_state == 4) {
+        t -= 1;
+        if (t<200){
+          t=200;
+        }
+        else if (t>8000){
+          t=8000;
+        }
+      }
+      else if (settings_state == 5) {
+        mode = 0;
+      }
+    }
+    button_press=true;
+   }
+   else{
+    button_press=false;
+   }
+  //Settings menu
+  switch (settings_state) {
+      case (0): //SETTINGS
+        lcd.setCursor(0, 0);
+        lcd.print("   Settings   ");
+        lcd.setCursor(0, 1);
+        lcd.print("Change STORY  ");
+        break;
+      case (1): //Length of S
+        lcd.setCursor(0, 0);
+        lcd.print("Sequence Length");
+        lcd.setCursor(0, 1);
+        lcd.print("- <--"+String(n)+"--> +");
+        break;
+      case (2)://No. Of Choices
+        lcd.setCursor(0, 0);
+        lcd.print("Choices Length");
+        lcd.setCursor(0, 1);
+        lcd.print("- <--"+String(n)+"--> +");
+        break;
+      case (3)://Delay
+        lcd.setCursor(0, 0);
+        lcd.print("     Delay    ");
+        lcd.setCursor(0, 1);
+        lcd.print("- <--"+String(d)+"--> +");
+        break;
+      case (4)://Countdown for user
+        lcd.setCursor(0, 0);
+        lcd.print("   Countdown  ");
+        lcd.setCursor(0, 1);
+        lcd.print("- <--"+String(t)+"--> +");
+        break;
+      case (5)://GO BACK
+        lcd.setCursor(0, 0);
+        lcd.print("     GO BACK");
+        lcd.setCursor(0, 1);
+        lcd.print("Click left/right");
+        break;
+    }
 }
 
 void scroll_top_row(String top, String bottom) {
