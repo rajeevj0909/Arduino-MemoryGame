@@ -13,11 +13,12 @@ String message;
 String main_menu = ("L <---Menu---> R");
 
 //Used for gameplay
-//String s[] = {}; //Sequence to remember
+String s[] = {}; //Sequence to remember
 int n = 0; //Length of sequence
-//String m[] = {"U", "D", "L", "R"}; //Up, Down, Left, Right Choices
+String m[] = {"Up", "Down", "Left", "Right"}; //Up, Down, Left, Right Choices
 float t = 5000; //5 Seconds to type in answer
 bool game_over = false;
+bool button_press=false;
 
 void setup() {
   Serial.begin(9600);
@@ -37,6 +38,13 @@ void loop() {
 }
 
 void menu() {
+  //RESET VARIABLES
+  n = 0; //Length of sequence
+  t = 5000; //5 Seconds to type in answer
+  game_over = false;
+  button_press=false;
+  
+  //Buttons for menu
   uint8_t buttons = lcd.readButtons();
   if (buttons) {
     if (buttons & BUTTON_RIGHT) {
@@ -129,13 +137,15 @@ void menu() {
 void practice() {
   lcd.clear();
   Serial.println("Practice");
-  lcd.print("Remember the code displayed and type it back in using the arrows.");
-  delay(5000);
+  lcd.setCursor(0, 0);
+  lcd.print("READ CODE AND ");
+  lcd.setCursor(0, 1);
+  lcd.print("REPEAT BACK!");
+  delay(3000);
 
   //GAMEPLAY
   String s[4];
   n = 4;
-  String m[] = {"U", "D", "L", "R"};
   t = 5000;
   while (game_over == false) {
     lcd.clear();
@@ -155,7 +165,47 @@ void practice() {
       }
     }
     lcd.print(s[0] + s[1] + s[2] + s[3]);
-    delay(3000);
+    Serial.println(s[0] + s[1] + s[2] + s[3]);
+    delay(1000);
+    int get_inputs = 0;
+    String user_attempt[4];
+    while (get_inputs < 4) {
+      lcd.clear();
+      uint8_t buttons = lcd.readButtons();
+      if (buttons) {
+        if (button_press==false){
+          if (buttons & BUTTON_UP) {
+            user_attempt[get_inputs]="U";
+            get_inputs += 1;
+          }
+          if (buttons & BUTTON_DOWN) {
+            user_attempt[get_inputs]="D";
+            get_inputs += 1;
+          }
+          if (buttons & BUTTON_LEFT) {
+            user_attempt[get_inputs]="L";
+            get_inputs += 1;
+          }
+          if (buttons & BUTTON_RIGHT) {
+            user_attempt[get_inputs]="R";
+            get_inputs += 1;
+          }
+          button_press=true;
+        }
+      }
+      else{
+        button_press=false;
+        }
+    }
+    Serial.println("My GUESS: "+user_attempt[0] + user_attempt[1] + user_attempt[2] + user_attempt[3]);
+    if ((user_attempt[0]!=s[0])or (user_attempt[1]!=s[1])or(user_attempt[2]!=s[2])or(user_attempt[3]!=s[3])){
+      lcd.setCursor(0, 0);
+      lcd.print("WRONG- COPY:"+s[0] + s[1] + s[2] + s[3]);
+      lcd.setCursor(0, 1);
+      lcd.print("You said: "+user_attempt[0] + user_attempt[1] + user_attempt[2] + user_attempt[3]);
+      delay(3000);
+      game_over=true;
+    }
   }
 }
 
