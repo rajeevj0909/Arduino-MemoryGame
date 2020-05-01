@@ -242,8 +242,6 @@ void story() {
   delay(1000);
 
   //GAMEPLAY
-  n = 4;//Length of sequence
-  d=1000;// 1 second to read, no limit to answer
   int level=1;
   int score=0;
   String s[n];
@@ -265,14 +263,17 @@ void story() {
       }
     }
     lcd.setCursor(0, 0);
-    lcd.print("    "+s[0]+" "+s[1]+" "+s[2]+" "+s[3]+"    ");
-    Serial.println("    "+s[0]+" "+s[1]+" "+s[2]+" "+s[3]+"    ");
+    for (int i = 0; i < n; i++) {
+      lcd.print(s[i]);
+      Serial.print(s[i]);
+    }
+    Serial.println(" ");
     lcd.setCursor(0, 1);
     //lcd.print("  " + t);
     delay(d);
     int get_inputs = 0;
     String user_attempt[4];
-    while (get_inputs < 4) {
+    while (get_inputs < n) {
       lcd.clear();
       uint8_t buttons = lcd.readButtons();
       if (buttons) {
@@ -300,18 +301,37 @@ void story() {
         button_press=false;
         }
     }
-    Serial.println("My GUESS: "+user_attempt[0] + user_attempt[1] + user_attempt[2] + user_attempt[3]);
-    if ((user_attempt[0]!=s[0])or (user_attempt[1]!=s[1])or(user_attempt[2]!=s[2])or(user_attempt[3]!=s[3])){
+    Serial.print("My GUESS:");
+    for (int i = 0; i < n; i++) {
+      Serial.print(user_attempt[i]);
+      if(user_attempt[i]!=s[i]){
+        game_over=true;
+        break;
+      }
+    }
+    Serial.println(" ");
+    if (game_over){
+      lcd.setBacklight(RED);
       lcd.setCursor(0, 0);
-      lcd.print("WRONG- COPY:"+s[0] + s[1] + s[2] + s[3]);
+      lcd.print("  COPY:");
+      for (int i = 0; i < n; i++) {
+        lcd.print(s[i]);
+        Serial.print(s[i]);
+      }
+      Serial.println(" ");
       lcd.setCursor(0, 1);
-      lcd.print("You said: "+user_attempt[0] + user_attempt[1] + user_attempt[2] + user_attempt[3]);
+      lcd.print("Typed: ");
+      for (int i = 0; i < n; i++) {
+        lcd.print(user_attempt[i]);
+        Serial.print(user_attempt[i]);
+      }
+      Serial.println(" ");
       delay(4000);
       lcd.clear();
+      lcd.setBacklight(BLUE);
       lcd.print("SCORE: "+ String(score));
       delay(4000);
       lcd.clear();
-      game_over=true;
       mode=0;
     }
     else{
@@ -321,8 +341,10 @@ void story() {
       lcd.print("    CORRECT!    "); 
       lcd.setCursor(0, 1);
       Serial.println(" Level: "+String(level));
-      lcd.print("    Level "+String(level)+" !");
+      lcd.print("    Level "+String(level));
       delay(1200);
+      //INCREASE DIFFICULTY
+      
     }
   }
 }
@@ -338,12 +360,14 @@ void settings() {
   if (buttons) {
     if (buttons & BUTTON_DOWN) {
       settings_state += 1;
+      lcd.clear();
       if (settings_state > 5) {
         settings_state = 0;
       }
     }
     if (buttons & BUTTON_UP) {
       settings_state -= 1;
+      lcd.clear();
       if (settings_state < 0) {
         settings_state = 5;
       }
@@ -351,15 +375,27 @@ void settings() {
     if (buttons & BUTTON_RIGHT) {
       if (settings_state == 1) {
         n += 1;
+        if (n>16){
+          n=16;
+        }
       }
       else if (settings_state == 2) {
         n += 1;
+        if (n>4){
+          n=4;
+        }
       }
       else if (settings_state == 3) {
-        d += 1;
+        d += 50;
+        if (d>8000){
+          d=8000;
+        }
       }
       else if (settings_state == 4) {
-        t += 1;
+        t += 50;
+        if (t>8000){
+          t=8000;
+        }
       }
       else if (settings_state == 5) {
         mode = 0;
@@ -371,35 +407,23 @@ void settings() {
         if (n<2){
           n=2;
         }
-        else if (n>16){
-          n=16;
-        }
       }
       else if (settings_state == 2) {
         n -= 1;
         if (n<2){
           n=2;
         }
-        else if (n>4){
-          n=4;
-        }
       }
       else if (settings_state == 3) {
-        d -= 20;
+        d -= 50;
         if (d<200){
           d=200;
         }
-        else if (d>8000){
-          d=8000;
-        }
       }
       else if (settings_state == 4) {
-        t -= 1;
+        t -= 50;
         if (t<200){
           t=200;
-        }
-        else if (t>8000){
-          t=8000;
         }
       }
       else if (settings_state == 5) {
@@ -417,7 +441,7 @@ void settings() {
         lcd.setCursor(0, 0);
         lcd.print("   Settings   ");
         lcd.setCursor(0, 1);
-        lcd.print("Change STORY  ");
+        lcd.print("ALTER PRACTICE");
         break;
       case (1): //Length of S
         lcd.setCursor(0, 0);
