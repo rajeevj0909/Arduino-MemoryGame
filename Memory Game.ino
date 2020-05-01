@@ -4,6 +4,14 @@
 #include <EEPROM.h>
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
+#define RED 0x1
+#define YELLOW 0x3
+#define GREEN 0x2
+#define TEAL 0x6
+#define BLUE 0x4
+#define VIOLET 0x5
+#define WHITE 0x7
+
 //Used for menu
 int mode = 0;
 int menu_state = 0;
@@ -16,11 +24,12 @@ bool reload_scroll = false;
 String s[] = {}; //Sequence to remember
 int n = 2; //Length of sequence
 String  m[] = {"U", "D", "L", "R"};//Choices in practice mode
+int c = 2; //Length of choices
 int d = 1000; // Time it's shown
 int t = 5000; //Seconds to answer
-bool game_over = false;
-int username_state = 0;
-int username[] = {65, 65, 65};
+bool game_over = false;//Game finished
+int username_state = 0; //Letter chosen to edit
+int username[] = {65, 65, 65}; //{A,A,A}
 
 //Used for scroll_top_row function
 int index = 0;
@@ -31,17 +40,10 @@ void setup() {
   Serial.begin(9600);
   lcd.begin(16, 2);
   randomSeed(analogRead(0));
-  setup_leaderboard(); //Run this line if it's a new arduino
+  //setup_leaderboard(); //Run this line if it's a new arduino
 }
 
 void loop() {
-#define RED 0x1
-#define YELLOW 0x3
-#define GREEN 0x2
-#define TEAL 0x6
-#define BLUE 0x4
-#define VIOLET 0x5
-#define WHITE 0x7
   menu();
 }
 
@@ -55,21 +57,18 @@ void menu() {
   if (buttons) {
     if (buttons & BUTTON_RIGHT) {
       menu_state += 1;
-      Serial.println("Right");
       if (menu_state > 4) {
         menu_state = 0;
       }
     }
     if (buttons & BUTTON_LEFT) {
       menu_state -= 1;
-      Serial.println("Left");
       if (menu_state == (-1)) {
         menu_state = 4;
       }
     }
     if (buttons & BUTTON_SELECT) {
       lcd.clear();
-      Serial.println("Select");
       if (menu_state == 1) { //Practice
         mode = 1; //practe_state
       }
@@ -85,7 +84,6 @@ void menu() {
     }
     reload_scroll = false;
     button_press = true;
-    Serial.println("Mode:" + String(mode) + "Menu:" + String(menu_state) + "Leader:" + String(leaderboard_state) + "Sett:" + String(settings_state));
   }
   else {
     button_press = false;
@@ -104,7 +102,7 @@ void menu() {
           lcd.setBacklight(RED);
           message = "Practice Mode- Press SELECT or move on";
           scroll_top_row(message, main_menu);
-          lcd.print("Practice Mode   ");
+          lcd.print(" Practice Mode  ");
           reload_scroll = true;
         }
         break;
@@ -113,7 +111,7 @@ void menu() {
           lcd.setBacklight(TEAL);
           message = "Story Mode- Press SELECT or move on";
           scroll_top_row(message, main_menu);
-          lcd.print("Story Mode      ");
+          lcd.print("   Story Mode   ");
           reload_scroll = true;
         }
         break;
@@ -156,7 +154,6 @@ void menu() {
 }
 
 void practice() {
-  Serial.println("Practice");
   index = 0;
   String message1 = ("   READ CODE AND REPEAT IT BACK ON ARROWS");
   String message2 = ("   GOOD LUCK!   ");
@@ -169,26 +166,30 @@ void practice() {
     lcd.clear();
     for (int i = 0; i < n; i++) {
       long randNumber = random(300);
-      if (randNumber < 75) {
+      Serial.println(randNumber);
+      if (randNumber < (300/c)) {
         s[i] = m[0];
       }
-      else if (randNumber < 150) {
+      else if (randNumber < ((300/c)*2)) {
         s[i] = m[1];
       }
-      else if (randNumber < 225) {
+      else if (randNumber < ((300/c)*3)) {
         s[i] = m[2];
       }
-      else if (randNumber < 300) {
+      else if (randNumber < ((300/c)*4)) {
         s[i] = m[3];
       }
     }
     lcd.setCursor(0, 0);
-    lcd.print("    " + s[0] + " " + s[1] + " " + s[2] + " " + s[3] + "    ");
-    Serial.println("    " + s[0] + " " + s[1] + " " + s[2] + " " + s[3] + "    ");
+    for (int i = 0; i < n; i++) {
+      lcd.print(s[i]);
+      Serial.print(s[i]);
+    }
+    Serial.println(" ");
     delay(d);
     int get_inputs = 0;
-    String user_attempt[4];
-    while (get_inputs < 4) {
+    String user_attempt[n];
+    while (get_inputs < n) {
       lcd.clear();
       uint8_t buttons = lcd.readButtons();
       if (buttons) {
@@ -216,27 +217,47 @@ void practice() {
         button_press = false;
       }
     }
-    Serial.println("My GUESS: " + user_attempt[0] + user_attempt[1] + user_attempt[2] + user_attempt[3]);
-    if ((user_attempt[0] != s[0]) or (user_attempt[1] != s[1]) or (user_attempt[2] != s[2]) or (user_attempt[3] != s[3])) {
+    Serial.print("My GUESS:");
+    for (int i = 0; i < n; i++) {
+      Serial.print(user_attempt[i]);
+      if (user_attempt[i] != s[i]) {
+        game_over = true;
+        break;
+      }
+    }
+    Serial.println(" ");
+    if (game_over) {
+      lcd.setBacklight(BLUE);
       lcd.setCursor(0, 0);
-      lcd.print("WRONG- COPY:" + s[0] + s[1] + s[2] + s[3]);
+      lcd.print(" COPY:");
+      for (int i = 0; i < n; i++) {
+        lcd.print(s[i]);
+        Serial.print(s[i]);
+      }
+      Serial.println(" ");
       lcd.setCursor(0, 1);
-      lcd.print("You said: " + user_attempt[0] + user_attempt[1] + user_attempt[2] + user_attempt[3]);
+      lcd.print("Typed:");
+      for (int i = 0; i < n; i++) {
+        lcd.print(user_attempt[i]);
+        Serial.print(user_attempt[i]);
+      }
+      Serial.println(" ");
       delay(4000);
+      lcd.setBacklight(RED);
       lcd.clear();
-      game_over = true;
       mode = 0;
     }
     else {
+      lcd.setBacklight(GREEN);
       lcd.setCursor(0, 0);
       lcd.print("CORRECT!");
       delay(500);
+      lcd.setBacklight(RED);
     }
   }
 }
 
 void story() {
-  Serial.println("Story");
   index = 0;
   String message1 = ("   READ+REPEAT...BE FAST!");
   String message2 = ("  GOOD LUCK!!!  ");
@@ -274,7 +295,6 @@ void story() {
       Serial.print(s[i]);
     }
     Serial.println(" ");
-    lcd.setCursor(0, 1);
     delay(d);
     int get_inputs = 0;
     String user_attempt[n];
@@ -420,7 +440,7 @@ void story() {
             else {
               button_press = false;
             }
-            
+
             switch (username_state) {
               case (0):
                 lcd.setCursor(0, 0);
@@ -448,7 +468,6 @@ void story() {
                 break;
             }
           }
-          //BOB
           new_leaderboard[i - 3] = username[0];
           new_leaderboard[i - 2] = username[1];
           new_leaderboard[i - 1] = username[2];
@@ -473,16 +492,17 @@ void story() {
       mode = 0;
     }
     else {
+      lcd.setBacklight(GREEN);
       level += 1;
       score += 5;
       lcd.setCursor(0, 0);
       lcd.print("    CORRECT!    ");
       lcd.setCursor(0, 1);
-      Serial.println(" Level: " + String(level));
       lcd.print("    Level " + String(level));
       delay(1200);
+      lcd.setBacklight(BLUE);
 
-      //INCREASEs DIFFICULTY
+      //INCREASES DIFFICULTY
       d -= 50; //0.1 less seconds to read
       t -= 50; //0.1 less seconds to answer
       if ((level % 4) == 0) { //Every 4 levels
@@ -502,7 +522,6 @@ void leaderboard() {
   for (int i = 0; i < 20; i++) {
     leaderboard_list[i] = EEPROM.read(i);
   }
-
   //Buttons for leaderboard
   uint8_t buttons = lcd.readButtons();
   if (buttons) {
@@ -561,7 +580,7 @@ void leaderboard() {
       break;
     case (5)://GO BACK
       lcd.setCursor(0, 0);
-      lcd.print("     GO BACK");
+      lcd.print("    GO BACK");
       lcd.setCursor(0, 1);
       lcd.print("Click left/right");
       break;
@@ -569,7 +588,6 @@ void leaderboard() {
 }
 
 void settings() {
-  Serial.println("Settings");
   //Buttons for settings
   uint8_t buttons = lcd.readButtons();
   if (buttons) {
@@ -595,9 +613,9 @@ void settings() {
         }
       }
       else if (settings_state == 2) {
-        n += 1;
-        if (n > 4) {
-          n = 4;
+        c += 1;
+        if (c > 4) {
+          c = 4;
         }
       }
       else if (settings_state == 3) {
@@ -624,9 +642,9 @@ void settings() {
         }
       }
       else if (settings_state == 2) {
-        n -= 1;
-        if (n < 2) {
-          n = 2;
+        c -= 1;
+        if (c < 2) {
+          c = 2;
         }
       }
       else if (settings_state == 3) {
@@ -668,7 +686,7 @@ void settings() {
       lcd.setCursor(0, 0);
       lcd.print("Choices Length");
       lcd.setCursor(0, 1);
-      lcd.print("- <--" + String(n) + "--> +");
+      lcd.print("- <--" + String(c) + "--> +");
       break;
     case (3)://Delay
       lcd.setCursor(0, 0);
@@ -684,7 +702,7 @@ void settings() {
       break;
     case (5)://GO BACK
       lcd.setCursor(0, 0);
-      lcd.print("     GO BACK");
+      lcd.print("    GO BACK");
       lcd.setCursor(0, 1);
       lcd.print("Click left/right");
       break;
@@ -707,7 +725,7 @@ void scroll_top_row(String top, String bottom) {
   }
 }
 
-void setup_leaderboard() {//Adds example values to view leaderboard as if it's been played before
+void setup_leaderboard() {//Adds example values to view leaderboard if it's not been played before
   char default_leaderboard[] = {'R', 'A', 'J', 80, 'S', 'A', 'M', 60, 'A', 'M', 'Y', 50, 'B', 'E', 'N', 15, 'J', 'O', 'E', 5};
   for (int i = 0; i < 20; i++) {
     EEPROM.update(i, (default_leaderboard[i]));//Change this to write!
