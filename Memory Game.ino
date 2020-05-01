@@ -29,7 +29,7 @@ void setup() {
   Serial.begin(9600);
   lcd.begin(16, 2);
   randomSeed(analogRead(0));
-  //setup_leaderboard() //Run this line if it's a new arduino
+  //setup_leaderboard(); //Run this line if it's a new arduino
 }
 
 void loop() {
@@ -108,7 +108,7 @@ void menu() {
         break;
       case (2)://Story
         if (reload_scroll == false) {
-          lcd.setBacklight(BLUE);
+          lcd.setBacklight(TEAL);
           message = "Story Mode- Press SELECT or move on";
           scroll_top_row(message, main_menu);
           lcd.print("Story Mode      ");
@@ -126,7 +126,7 @@ void menu() {
         break;
       case (4)://Settings
         if (reload_scroll == false) {
-          lcd.setBacklight(TEAL);
+          lcd.setBacklight(BLUE);
           message = "Settings- Press SELECT or move on";
           scroll_top_row(message, main_menu);
           lcd.print("Settings        ");
@@ -333,6 +333,39 @@ void story() {
       lcd.clear();
       lcd.setBacklight(BLUE);
       lcd.print("SCORE: " + String(score));
+
+      //Update Leaderboard
+      int leaderboard_list[20];
+      for (int i = 0; i < 20; i++) {
+        leaderboard_list[i] = EEPROM.read(i);
+      }
+      int new_leaderboard[24];
+      for (int i = 3; i < 20; i = i + 4) {
+        if (score > leaderboard_list[i]) {
+          new_leaderboard[i-3]= 68;
+          new_leaderboard[i-2]= 73;
+          new_leaderboard[i-1]= 75;
+          new_leaderboard[i]= score;
+          for (int x = i+1; x < 24; x++){
+            new_leaderboard[x]= leaderboard_list[x];
+          }
+          //Write the new leaderboard in
+          for (int j = 0; j < 20; j++) {
+            EEPROM.update(j, (new_leaderboard[j]));
+          }
+          break;
+        }
+        else{//Copy single entry from old leaderboard to new
+          new_leaderboard[i-3]= leaderboard_list[i-3];
+          new_leaderboard[i-2]= leaderboard_list[i-2];
+          new_leaderboard[i-1]= leaderboard_list[i-1];
+          new_leaderboard[i]= leaderboard_list[i];
+          }
+      }
+      Serial.println(" ");
+
+
+
       delay(4000);
       lcd.clear();
       mode = 0;
@@ -366,18 +399,7 @@ void leaderboard() {
   int leaderboard_list[20];
   for (int i = 0; i < 20; i++) {
     leaderboard_list[i] = EEPROM.read(i);
-    //Serial.println("Address:" + String(i) + " Data:" + String(EEPROM.read(i)));
   }
-  /*
-    for (int i = 0; i < 20; i++) {
-    if (((i + 1) % 4) == 0) { //This is a score
-      Serial.print(leaderboard_list[]);
-    }
-    else { //This is a letter
-      Serial.print(char(leaderboard_list[i]));
-    }
-    }
-    Serial.println(" ");*/
 
   //Buttons for leaderboard
   uint8_t buttons = lcd.readButtons();
@@ -584,8 +606,8 @@ void scroll_top_row(String top, String bottom) {
 }
 
 void setup_leaderboard() {//Adds example values to view leaderboard as if it's been played before
-  char default_leaderboard[] = {'R', 'A', 'J', 80, 'S', 'A', 'M', 60, 'A', 'M', 'Y', 50, 'B', 'E', 'N', 40, 'J', 'O', 'E', 35};
+  char default_leaderboard[] = {'R', 'A', 'J', 80, 'S', 'A', 'M', 60, 'A', 'M', 'Y', 50, 'B', 'E', 'N', 15, 'J', 'O', 'E', 5};
   for (int i = 0; i < 20; i++) {
-    EEPROM.write(i, (default_leaderboard[i]));
+    EEPROM.update(i, (default_leaderboard[i]));//Change this to write!
   }
 }
