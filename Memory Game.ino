@@ -18,8 +18,9 @@ String main_menu = ("L <---Menu---> R");
 //Used for gameplay
 String s[] = {}; //Sequence to remember
 int n = 0; //Length of sequence
-String m[] = {"Up", "Down", "Left", "Right"}; //Up, Down, Left, Right Choices
-float t = 5000; //5 Seconds to type in answer
+String  m[] = {"U", "D", "L", "R"};//Choices in practice mode
+int d=1000;// Time it's shown 
+int t = 5000; //Seconds to answer
 bool game_over = false;
 
 
@@ -116,7 +117,7 @@ void menu() {
       case (3)://Leaderboard
         if (reload_scroll==false){
           lcd.setBacklight(YELLOW);
-          message = "Leaderboard- Press SELECT or move on";
+          message = "  Leaderboard- Press SELECT or move on";
           scroll_top_row(message, main_menu);
           lcd.print("Leaderboard     ");
           reload_scroll=true;
@@ -154,15 +155,16 @@ void menu() {
 void practice() {
   lcd.clear();
   Serial.println("Practice");
-  String message1 = ("READ CODE AND REPEAT");
-  String message2 = ("BACK ON ARROWS!");
+  index=0;
+  String message1 = ("   READ CODE AND REPEAT IT BACK ON ARROWS");
+  String message2 = ("   GOOD LUCK!   ");
   scroll_top_row(message1, message2);
-  delay(3000);
+  delay(1000);
 
   //GAMEPLAY
-  String s[4];
-  n = 4;
-  t = 5000;
+  n = 4;//Length of sequence
+  d=1000;// 1 second to read, no limit to answer
+  String s[n];
   while (game_over == false) {
     lcd.clear();
     for (int i = 0; i < n; i++) {
@@ -181,11 +183,9 @@ void practice() {
       }
     }
     lcd.setCursor(0, 0);
-    lcd.print(s[0] + " " + s[1]);
-    lcd.setCursor(0, 1);
-    lcd.print(s[2] + " " + s[3]);
-    Serial.println(s[0] + s[1] + s[2] + s[3]);
-    delay(1000);
+    lcd.print("    "+s[0]+" "+s[1]+" "+s[2]+" "+s[3]+"    ");
+    Serial.println("    "+s[0]+" "+s[1]+" "+s[2]+" "+s[3]+"    ");
+    delay(d);
     int get_inputs = 0;
     String user_attempt[4];
     while (get_inputs < 4) {
@@ -194,19 +194,19 @@ void practice() {
       if (buttons) {
         if (button_press==false){
           if (buttons & BUTTON_UP) {
-            user_attempt[get_inputs]="Up";
+            user_attempt[get_inputs]="U";
             get_inputs += 1;
           }
           if (buttons & BUTTON_DOWN) {
-            user_attempt[get_inputs]="Down";
+            user_attempt[get_inputs]="D";
             get_inputs += 1;
           }
           if (buttons & BUTTON_LEFT) {
-            user_attempt[get_inputs]="Left";
+            user_attempt[get_inputs]="L";
             get_inputs += 1;
           }
           if (buttons & BUTTON_RIGHT) {
-            user_attempt[get_inputs]="Right";
+            user_attempt[get_inputs]="R";
             get_inputs += 1;
           }
           button_press=true;
@@ -222,9 +222,15 @@ void practice() {
       lcd.print("WRONG- COPY:"+s[0] + s[1] + s[2] + s[3]);
       lcd.setCursor(0, 1);
       lcd.print("You said: "+user_attempt[0] + user_attempt[1] + user_attempt[2] + user_attempt[3]);
-      delay(3000);
+      delay(4000);
+      lcd.clear();
       game_over=true;
       mode=0;
+    }
+    else{
+      lcd.setCursor(0, 0);
+      lcd.print("CORRECT!");
+      delay(500);
     }
   }
 }
