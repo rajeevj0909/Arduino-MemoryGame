@@ -6,6 +6,9 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 //Used for menu
 int mode = 0;
 int menu_state = 0;
+bool button_press=false;
+bool reload_scroll=false;
+
 
 //Used for scroll_top_row function
 int index = 0;
@@ -18,7 +21,7 @@ int n = 0; //Length of sequence
 String m[] = {"Up", "Down", "Left", "Right"}; //Up, Down, Left, Right Choices
 float t = 5000; //5 Seconds to type in answer
 bool game_over = false;
-bool button_press=false;
+
 
 void setup() {
   Serial.begin(9600);
@@ -76,8 +79,13 @@ void menu() {
         mode = 4; //settings_state
       }
     }
-  Serial.println("Menu State: "+String(menu_state)+"  Mode: "+String(mode));
-  }
+    reload_scroll=false;
+    button_press=true;
+    Serial.println("Menu State: "+String(menu_state)+"  Mode: "+String(mode));
+   }
+   else{
+    button_press=false;
+   }
   if (mode == 0) {
     switch (menu_state) {
       case (0): //HOME
@@ -88,31 +96,40 @@ void menu() {
         lcd.print("L <---Menu---> R");
         break;
       case (1): //Practice
-        lcd.setBacklight(RED);
-        message = "Practice Mode- Press SELECT or move on";
-        scroll_top_row(message, main_menu);
-        lcd.print("Practice Mode   ");
+        if (reload_scroll==false){
+          lcd.setBacklight(RED);
+          message = "Practice Mode- Press SELECT or move on";
+          scroll_top_row(message, main_menu);
+          lcd.print("Practice Mode   ");
+          reload_scroll=true;
+        }
         break;
       case (2)://Story
-        lcd.setBacklight(BLUE);
-        lcd.setCursor(0, 0);
-        lcd.print("Story Mode- Press SELECT or move on");
-        lcd.setCursor(0, 1);
-        lcd.print("L <---Menu---> R");
+        if (reload_scroll==false){
+          lcd.setBacklight(BLUE);
+          message = "Story Mode- Press SELECT or move on";
+          scroll_top_row(message, main_menu);
+          lcd.print("Story Mode      ");
+          reload_scroll=true;
+        }
         break;
-      case (3)://Settings
-        lcd.setBacklight(YELLOW);
-        lcd.setCursor(0, 0);
-        lcd.print("Leaderboard- Press SELECT or move on");
-        lcd.setCursor(0, 1);
-        lcd.print("L <---Menu---> R");
+      case (3)://Leaderboard
+        if (reload_scroll==false){
+          lcd.setBacklight(YELLOW);
+          message = "Leaderboard- Press SELECT or move on";
+          scroll_top_row(message, main_menu);
+          lcd.print("Leaderboard     ");
+          reload_scroll=true;
+        }
         break;
-      case (4)://Leaderboard
-        lcd.setBacklight(TEAL);
-        lcd.setCursor(0, 0);
-        lcd.print("Settings- Press SELECT or move on");
-        lcd.setCursor(0, 1);
-        lcd.print("L <---Menu---> R");
+      case (4)://Settings
+        if (reload_scroll==false){
+          lcd.setBacklight(TEAL);
+          message = "Settings- Press SELECT or move on";
+          scroll_top_row(message, main_menu);
+          lcd.print("Settings        ");
+          reload_scroll=true;
+        }
         break;
     }
   }
@@ -137,10 +154,9 @@ void menu() {
 void practice() {
   lcd.clear();
   Serial.println("Practice");
-  lcd.setCursor(0, 0);
-  lcd.print("READ CODE AND ");
-  lcd.setCursor(0, 1);
-  lcd.print("REPEAT BACK!");
+  String message1 = ("READ CODE AND REPEAT");
+  String message2 = ("BACK ON ARROWS!");
+  scroll_top_row(message1, message2);
   delay(3000);
 
   //GAMEPLAY
@@ -164,7 +180,10 @@ void practice() {
         s[i] = m[3];
       }
     }
-    lcd.print(s[0] + s[1] + s[2] + s[3]);
+    lcd.setCursor(0, 0);
+    lcd.print(s[0] + " " + s[1]);
+    lcd.setCursor(0, 1);
+    lcd.print(s[2] + " " + s[3]);
     Serial.println(s[0] + s[1] + s[2] + s[3]);
     delay(1000);
     int get_inputs = 0;
@@ -175,19 +194,19 @@ void practice() {
       if (buttons) {
         if (button_press==false){
           if (buttons & BUTTON_UP) {
-            user_attempt[get_inputs]="U";
+            user_attempt[get_inputs]="Up";
             get_inputs += 1;
           }
           if (buttons & BUTTON_DOWN) {
-            user_attempt[get_inputs]="D";
+            user_attempt[get_inputs]="Down";
             get_inputs += 1;
           }
           if (buttons & BUTTON_LEFT) {
-            user_attempt[get_inputs]="L";
+            user_attempt[get_inputs]="Left";
             get_inputs += 1;
           }
           if (buttons & BUTTON_RIGHT) {
-            user_attempt[get_inputs]="R";
+            user_attempt[get_inputs]="Right";
             get_inputs += 1;
           }
           button_press=true;
@@ -205,6 +224,7 @@ void practice() {
       lcd.print("You said: "+user_attempt[0] + user_attempt[1] + user_attempt[2] + user_attempt[3]);
       delay(3000);
       game_over=true;
+      mode=0;
     }
   }
 }
