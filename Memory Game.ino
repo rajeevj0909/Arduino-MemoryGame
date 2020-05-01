@@ -3,26 +3,21 @@
 #include <utility/Adafruit_MCP23017.h>
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
-int release_button = 0;
-
 //Used for menu
 int mode = 0;
 int menu_state = 0;
 
 //Used for scroll_top_row function
+int index = 0;
 String message;
 String main_menu = ("L <---Menu---> R");
-int index = 0;
-bool repeat = false;
 
 //Used for gameplay
-String s[] = {}; //Sequence to remember
+//String s[] = {}; //Sequence to remember
 int n = 0; //Length of sequence
-String m[] = {"U", "D", "L", "R"}; //Up, Down, Left, Right Choices
+//String m[] = {"U", "D", "L", "R"}; //Up, Down, Left, Right Choices
 float t = 5000; //5 Seconds to type in answer
 bool game_over = false;
-int current = millis();
-String user_attempt[4];
 
 void setup() {
   Serial.begin(9600);
@@ -73,73 +68,68 @@ void menu() {
         mode = 4; //settings_state
       }
     }
-    Serial.println("Menu State: " + String(menu_state) + "  Mode: " + String(mode));
+  Serial.println("Menu State: "+String(menu_state)+"  Mode: "+String(mode));
   }
-  switch (mode) {
-    case 0:
-      switch (menu_state) {
-        case (0): //HOME
-          /*byte charName[] = {
-            B11011,
-            B11011,
-            B00000,
-            B00100,
-            B00100,
-            B10001,
-            B10001,
-            B01110};
-            lcd.write(charName);*/
-          lcd.setBacklight(GREEN);
-          lcd.setCursor((-7), 0);
-          lcd.print("  Memory Game   ");
-          lcd.setCursor(0, 1);
-          lcd.print("L <---Menu---> R");
-          break;
-        case (1): //Practice
-          lcd.setBacklight(RED);
-          message = "Practice Mode- Press SELECT or move on";
-          message = "Quick";
-          //scroll_top_row(message, main_menu);
-          break;
-        case (2)://Story
-          lcd.setBacklight(BLUE);
-          message = "Story Mode- Press SELECT or move on";
-          //scroll_top_row(message, main_menu);
-          break;
-        case (3)://Settings
-          lcd.setBacklight(YELLOW);
-          message = "Leaderboard- Press SELECT or move on";
-          //scroll_top_row(message, main_menu);
-          break;
-        case (4)://Leaderboard
-          lcd.setBacklight(TEAL);
-          message = "Settings- Press SELECT or move on";
-          //scroll_top_row(message, main_menu);
-          break;
-      }
-      break;}}/*
-    case 1:
-      practice();
-      break;
-    case 2:
-      story();
-      break;
-    case 3:
-      leaderboard();
-      break;
-    case 4:
-      settings();
-      break;
+  if (mode == 0) {
+    switch (menu_state) {
+      case (0): //HOME
+        lcd.setBacklight(GREEN);
+        lcd.setCursor((-7), 0);
+        lcd.print("  Memory Game   ");
+        lcd.setCursor(0, 1);
+        lcd.print("L <---Menu---> R");
+        break;
+      case (1): //Practice
+        lcd.setBacklight(RED);
+        message = "Practice Mode- Press SELECT or move on";
+        scroll_top_row(message, main_menu);
+        lcd.print("Practice Mode   ");
+        break;
+      case (2)://Story
+        lcd.setBacklight(BLUE);
+        lcd.setCursor(0, 0);
+        lcd.print("Story Mode- Press SELECT or move on");
+        lcd.setCursor(0, 1);
+        lcd.print("L <---Menu---> R");
+        break;
+      case (3)://Settings
+        lcd.setBacklight(YELLOW);
+        lcd.setCursor(0, 0);
+        lcd.print("Leaderboard- Press SELECT or move on");
+        lcd.setCursor(0, 1);
+        lcd.print("L <---Menu---> R");
+        break;
+      case (4)://Leaderboard
+        lcd.setBacklight(TEAL);
+        lcd.setCursor(0, 0);
+        lcd.print("Settings- Press SELECT or move on");
+        lcd.setCursor(0, 1);
+        lcd.print("L <---Menu---> R");
+        break;
+    }
   }
-
+  else {
+    switch (mode) {
+      case 1:
+        practice();
+        break;
+      case 2:
+        story();
+        break;
+      case 3:
+        leaderboard();
+        break;
+      case 4:
+        settings();
+        break;
+    }
+  }
 }
 
 void practice() {
   lcd.clear();
   Serial.println("Practice");
-  lcd.setCursor(0, 0);
   lcd.print("Remember the code displayed and type it back in using the arrows.");
-  lcd.scrollDisplayLeft();
   delay(5000);
 
   //GAMEPLAY
@@ -165,31 +155,7 @@ void practice() {
       }
     }
     lcd.print(s[0] + s[1] + s[2] + s[3]);
-    delay(1000);
-    int get_inputs = 0;
-    while (get_inputs < 16) {
-      lcd.clear();
-      uint8_t buttons = lcd.readButtons();
-      if (buttons) {
-        Serial.println(get_inputs);
-        if (buttons & BUTTON_LEFT) {
-          Serial.println("Left-CHOICE");
-          get_inputs += 1;
-        }
-        if (buttons & BUTTON_RIGHT) {
-          Serial.println("Right-CHOICE");
-          get_inputs += 1;
-        }
-        if (buttons & BUTTON_UP) {
-          Serial.println("Up-CHOICE");
-          get_inputs += 1;
-        }
-        if (buttons & BUTTON_DOWN) {
-          Serial.println("Down-CHOICE");
-          get_inputs += 1;
-        }
-      }
-    }
+    delay(3000);
   }
 }
 
@@ -209,22 +175,17 @@ void settings() {
 }
 
 void scroll_top_row(String top, String bottom) {
-  if (repeat == false) {
-    Serial.println(top);
-    index = 0;
-    top = " " + top + " ";
+  top = " " + top + " ";
+  lcd.setCursor(0, 1);
+  lcd.print(bottom);
+  lcd.setCursor(0, 0);
+  while (index < top.length()) {
+    index += 1;
     lcd.setCursor(0, 1);
     lcd.print(bottom);
     lcd.setCursor(0, 0);
-    while (index < top.length()) {
-      index += 1;
-      lcd.setCursor(0, 1);
-      lcd.print(bottom);
-      lcd.setCursor(0, 0);
-      for (int j = index; j < top.length(); j++) {
-        lcd.print(top.charAt(j));
-      }
+    for (int j = index; j < top.length(); j++) {
+      lcd.print(top.charAt(j));
     }
   }
-  repeat = true;
-}*/
+}
