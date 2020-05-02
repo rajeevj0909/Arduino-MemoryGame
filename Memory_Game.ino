@@ -12,6 +12,16 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 #define VIOLET 0x5
 #define WHITE 0x7
 
+//Custom Characters
+byte up_arrow[] = { B00100, B01110, B10101, B00100, B00100, B00100, B00100, B00100 };
+byte down_arrow[] = { B00100, B00100, B00100, B00100, B00100, B10101, B01110, B00100 };
+byte happy_face[] = { B01010, B01010, B00000, B00100, B00100, B10001, B01010, B00100 };
+byte full_block[] = { B11111, B11111, B11111, B11111, B11111, B11111, B11111, B11111 };
+byte wrong_TL[] = { B11110, B00000, B01101, B01101, B00001, B00001, B00111, B00101 }; 
+byte wrong_TR[] = { B01111, B00000, B10110, B10110, B10000, B10000, B11100, B10100 }; 
+byte wrong_BL[] = { B00000, B00000, B00111, B01000, B10000, B10000, B00000, B00000 }; 
+byte wrong_BR[] = { B00000, B00000, B11100, B00010, B00001, B00001, B00000, B00000 };
+
 //Used for menu interaction
 int mode = 0;
 int menu_state = 0;
@@ -40,6 +50,14 @@ String main_menu = ("L <---Menu---> R");
 void setup() {
   Serial.begin(9600);
   lcd.begin(16, 2);
+  lcd.createChar(0, up_arrow);
+  lcd.createChar(1, down_arrow);
+  lcd.createChar(2, happy_face);
+  lcd.createChar(3, full_block);
+  lcd.createChar(4, wrong_TL);
+  lcd.createChar(5, wrong_TR);
+  lcd.createChar(6, wrong_BL);
+  lcd.createChar(7, wrong_BR);
   randomSeed(analogRead(0));
   //setup_leaderboard(); //Run this line if it's a new arduino
 }
@@ -56,37 +74,39 @@ void menu() {
   //Buttons for menu
   uint8_t buttons = lcd.readButtons();
   if (buttons && (mode == 0)) {
-    if (buttons & BUTTON_RIGHT) {
-      menu_state += 1;
-      if (menu_state > 4) {
-        menu_state = 0;
+    if (button_press == false) {
+      if (buttons & BUTTON_RIGHT) {
+        menu_state += 1;
+        if (menu_state > 4) {
+          menu_state = 0;
+        }
       }
+      if (buttons & BUTTON_LEFT) {
+        menu_state -= 1;
+        if (menu_state == (-1)) {
+          menu_state = 4;
+        }
+      }
+      if (buttons & BUTTON_SELECT) {
+        lcd.clear();
+        if (menu_state == 1) { //Practice
+          mode = 1; //practe_state
+        }
+        else if (menu_state == 2) { //Story
+          mode = 2; //story_state
+        }
+        else if (menu_state == 3) { //Leaderboard
+          mode = 3; //leaderboard_state
+          leaderboard_state = 0;
+        }
+        else if (menu_state == 4) { //Settings
+          mode = 4; //settings_state
+          settings_state = 0;
+        }
+      }
+      reload_scroll = false;
+      button_press = true;
     }
-    if (buttons & BUTTON_LEFT) {
-      menu_state -= 1;
-      if (menu_state == (-1)) {
-        menu_state = 4;
-      }
-    }
-    if (buttons & BUTTON_SELECT) {
-      lcd.clear();
-      if (menu_state == 1) { //Practice
-        mode = 1; //practe_state
-      }
-      else if (menu_state == 2) { //Story
-        mode = 2; //story_state
-      }
-      else if (menu_state == 3) { //Leaderboard
-        mode = 3; //leaderboard_state
-        leaderboard_state = 0;
-      }
-      else if (menu_state == 4) { //Settings
-        mode = 4; //settings_state
-        settings_state = 0;
-      }
-    }
-    reload_scroll = false;
-    button_press = true;
   }
   else {
     button_press = false;
@@ -195,11 +215,6 @@ void practice() {
     int get_inputs = 0;
     String user_attempt[n];
     current = millis();
-    Serial.println("START: ");
-    Serial.println(current);
-    Serial.println("END: ");
-    Serial.println(current + t);
-    Serial.println("START GUESSS");
     while (get_inputs < n) {
       uint8_t buttons = lcd.readButtons();
       if (buttons && (mode == 1)) {
@@ -230,7 +245,6 @@ void practice() {
       lcd.print("TIMER: ");
       lcd.setCursor(15, 1);
       lcd.print(((current + t) - millis()) / 1000);
-      Serial.println(((current + t) - millis()) / 1000);
       if ((current + t) < millis()) {
         Serial.println("TIMES UP");
         lcd.clear();
@@ -250,8 +264,16 @@ void practice() {
     }
     Serial.println(" ");
     if (game_over) {
-      lcd.clear();
       lcd.setBacklight(BLUE);
+      lcd.clear();//Draw sad face
+      lcd.setCursor(7, 0);
+      lcd.write(byte(4));
+      lcd.write(byte(5));
+      lcd.setCursor(7, 1);
+      lcd.write(byte(6));
+      lcd.write(byte(7));
+      delay(3000);
+      lcd.clear();//Show result
       lcd.setCursor(0, 0);
       lcd.print(" COPY:");
       for (int i = 0; i < n; i++) {
@@ -353,7 +375,6 @@ void story() {
       lcd.print("TIMER: ");
       lcd.setCursor(15, 1);
       lcd.print(((current + t) - millis()) / 1000);
-      Serial.println(((current + t) - millis()) / 1000);
       if ((current + t) < millis()) {
         Serial.println("TIMES UP");
         lcd.clear();
@@ -373,8 +394,16 @@ void story() {
     }
     Serial.println(" ");
     if (game_over) {
-      lcd.clear();
       lcd.setBacklight(RED);
+      lcd.clear();//Draw sad face
+      lcd.setCursor(7, 0);
+      lcd.write(byte(4));
+      lcd.write(byte(5));
+      lcd.setCursor(7, 1);
+      lcd.write(byte(6));
+      lcd.write(byte(7));
+      delay(3000);
+      lcd.clear();//Show result
       lcd.setCursor(0, 0);
       lcd.print(" COPY:");
       for (int i = 0; i < n; i++) {
@@ -411,74 +440,75 @@ void story() {
           while (username_state < 5) {
             uint8_t buttons = lcd.readButtons();
             if (buttons) {
-              if (buttons & BUTTON_DOWN) {
-                username_state += 1;
-                lcd.clear();
-                if (username_state == 4) {
-                  username_state = 0;
+              if (button_press == false) {
+                if (buttons & BUTTON_DOWN) {
+                  username_state += 1;
+                  lcd.clear();
+                  if (username_state == 4) {
+                    username_state = 0;
+                  }
                 }
+                if (buttons & BUTTON_UP) {
+                  username_state -= 1;
+                  lcd.clear();
+                  if (username_state == 0) {
+                    username_state = 4;
+                  }
+                }
+                if (buttons & BUTTON_RIGHT) {
+                  lcd.clear();
+                  if (username_state == 0) {
+                    username[0] += 1;
+                    if (username[0] > 90) {
+                      username[0] = 65;
+                    }
+                  }
+                  else if (username_state == 1) {
+                    username[1] += 1;
+                    if (username[1] > 90) {
+                      username[1] = 65;
+                    }
+                  }
+                  else if (username_state == 2) {
+                    username[2] += 1;
+                    if (username[2] > 90) {
+                      username[2] = 65;
+                    }
+                  }
+                  else if (username_state == 3) {
+                    username_state = 5;
+                  }
+                }
+                if (buttons & BUTTON_LEFT) {
+                  lcd.clear();
+                  if (username_state == 0) {
+                    username[0] -= 1;
+                    if (username[0] < 65) {
+                      username[0] = 90;
+                    }
+                  }
+                  else if (username_state == 1) {
+                    username[1] += 1;
+                    if (username[1] > 65) {
+                      username[1] = 90;
+                    }
+                  }
+                  else if (username_state == 2) {
+                    username[2] -= 1;
+                    if (username[2] < 65) {
+                      username[2] = 90;
+                    }
+                  }
+                  else if (username_state == 3) {
+                    username_state = 5;
+                  }
+                }
+                button_press = true;
               }
-              if (buttons & BUTTON_UP) {
-                username_state -= 1;
-                lcd.clear();
-                if (username_state == 0) {
-                  username_state = 4;
-                }
-              }
-              if (buttons & BUTTON_RIGHT) {
-                lcd.clear();
-                if (username_state == 0) {
-                  username[0] += 1;
-                  if (username[0] > 90) {
-                    username[0] = 65;
-                  }
-                }
-                else if (username_state == 1) {
-                  username[1] += 1;
-                  if (username[1] > 90) {
-                    username[1] = 65;
-                  }
-                }
-                else if (username_state == 2) {
-                  username[2] += 1;
-                  if (username[2] > 90) {
-                    username[2] = 65;
-                  }
-                }
-                else if (username_state == 3) {
-                  username_state = 5;
-                }
-              }
-              if (buttons & BUTTON_LEFT) {
-                lcd.clear();
-                if (username_state == 0) {
-                  username[0] -= 1;
-                  if (username[0] < 65) {
-                    username[0] = 90;
-                  }
-                }
-                else if (username_state == 1) {
-                  username[1] += 1;
-                  if (username[1] > 65) {
-                    username[1] = 90;
-                  }
-                }
-                else if (username_state == 2) {
-                  username[2] -= 1;
-                  if (username[2] < 65) {
-                    username[2] = 90;
-                  }
-                }
-                else if (username_state == 3) {
-                  username_state = 5;
-                }
-              }
-              button_press = true;
             }
             else {
               button_press = false;
             }
-
             switch (username_state) {
               case (0):
                 lcd.setCursor(0, 0);
@@ -564,26 +594,32 @@ void leaderboard() {
   //Buttons for leaderboard
   uint8_t buttons = lcd.readButtons();
   if (buttons && (mode == 3)) {
-    if (buttons & BUTTON_DOWN) {
-      leaderboard_state += 1;
-      lcd.clear();
-      if (leaderboard_state > 5) {
-        leaderboard_state = 0;
-      }
-    }
-    if (buttons & BUTTON_UP) {
-      leaderboard_state -= 1;
-      lcd.clear();
-      if (leaderboard_state < 0) {
-        leaderboard_state = 5;
-      }
-    }
-    if ((buttons & BUTTON_LEFT) or (buttons & BUTTON_RIGHT)) {
-      if (leaderboard_state == 5) {
+    if (button_press == false) {
+      if (buttons & BUTTON_DOWN) {
+        leaderboard_state += 1;
         lcd.clear();
-        mode = 0;
+        if (leaderboard_state > 5) {
+          leaderboard_state = 0;
+        }
       }
+      if (buttons & BUTTON_UP) {
+        leaderboard_state -= 1;
+        lcd.clear();
+        if (leaderboard_state < 0) {
+          leaderboard_state = 5;
+        }
+      }
+      if ((buttons & BUTTON_LEFT) or (buttons & BUTTON_RIGHT)) {
+        if (leaderboard_state == 5) {
+          lcd.clear();
+          mode = 0;
+        }
+      }
+      button_press = true;
     }
+  }
+  else {
+    button_press = false;
   }
   //Leadeboard menu
   switch (leaderboard_state) {
@@ -630,79 +666,81 @@ void settings() {
   //Buttons for settings
   uint8_t buttons = lcd.readButtons();
   if (buttons && (mode == 4)) {
-    if (buttons & BUTTON_DOWN) {
-      settings_state += 1;
-      lcd.clear();
-      if (settings_state > 5) {
-        settings_state = 0;
+    if (button_press == false) {
+      if (buttons & BUTTON_DOWN) {
+        settings_state += 1;
+        lcd.clear();
+        if (settings_state > 5) {
+          settings_state = 0;
+        }
       }
+      if (buttons & BUTTON_UP) {
+        settings_state -= 1;
+        lcd.clear();
+        if (settings_state < 0) {
+          settings_state = 5;
+        }
+      }
+      if (buttons & BUTTON_RIGHT) {
+        if (settings_state == 1) {
+          n += 1;
+          if (n > 16) {
+            n = 16;
+          }
+        }
+        else if (settings_state == 2) {
+          c += 1;
+          if (c > 4) {
+            c = 4;
+          }
+        }
+        else if (settings_state == 3) {
+          d += 50;
+          if (d > 8000) {
+            d = 8000;
+          }
+        }
+        else if (settings_state == 4) {
+          t += 50;
+          if (t > 8000) {
+            t = 8000;
+          }
+        }
+        else if (settings_state == 5) {
+          mode = 0;
+        }
+      }
+      if (buttons & BUTTON_LEFT) {
+        if (settings_state == 1) {
+          n -= 1;
+          if (n < 2) {
+            n = 2;
+          }
+        }
+        else if (settings_state == 2) {
+          c -= 1;
+          if (c < 2) {
+            c = 2;
+          }
+        }
+        else if (settings_state == 3) {
+          d -= 50;
+          if (d < 200) {
+            d = 200;
+          }
+        }
+        else if (settings_state == 4) {
+          t -= 50;
+          if (t < 200) {
+            t = 200;
+          }
+        }
+        else if (settings_state == 5) {
+          mode = 0;
+        }
+      }
+      button_press = true;
     }
-    if (buttons & BUTTON_UP) {
-      settings_state -= 1;
-      lcd.clear();
-      if (settings_state < 0) {
-        settings_state = 5;
-      }
-    }
-    if (buttons & BUTTON_RIGHT) {
-      if (settings_state == 1) {
-        n += 1;
-        if (n > 16) {
-          n = 16;
-        }
-      }
-      else if (settings_state == 2) {
-        c += 1;
-        if (c > 4) {
-          c = 4;
-        }
-      }
-      else if (settings_state == 3) {
-        d += 50;
-        if (d > 8000) {
-          d = 8000;
-        }
-      }
-      else if (settings_state == 4) {
-        t += 50;
-        if (t > 8000) {
-          t = 8000;
-        }
-      }
-      else if (settings_state == 5) {
-        mode = 0;
-      }
-    }
-    if (buttons & BUTTON_LEFT) {
-      if (settings_state == 1) {
-        n -= 1;
-        if (n < 2) {
-          n = 2;
-        }
-      }
-      else if (settings_state == 2) {
-        c -= 1;
-        if (c < 2) {
-          c = 2;
-        }
-      }
-      else if (settings_state == 3) {
-        d -= 50;
-        if (d < 200) {
-          d = 200;
-        }
-      }
-      else if (settings_state == 4) {
-        t -= 50;
-        if (t < 200) {
-          t = 200;
-        }
-      }
-      else if (settings_state == 5) {
-        mode = 0;
-      }
-    }
-    button_press = true;
   }
   else {
     button_press = false;
