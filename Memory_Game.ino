@@ -30,6 +30,7 @@ int t = 5000; //Seconds to answer
 bool game_over = false;//Game finished
 int username_state = 0; //Letter chosen to edit
 int username[] = {65, 65, 65}; //{A,A,A}
+long current;
 
 //Used for scroll_top_row function
 int index = 0;
@@ -190,10 +191,16 @@ void practice() {
     Serial.println(d);
     Serial.println(t);
     delay(d);
+    lcd.clear();
     int get_inputs = 0;
     String user_attempt[n];
+    current = millis();
+    Serial.println("START: ");
+    Serial.println(current);
+    Serial.println("END: ");
+    Serial.println(current + t);
+    Serial.println("START GUESSS");
     while (get_inputs < n) {
-      lcd.clear();
       uint8_t buttons = lcd.readButtons();
       if (buttons && (mode == 1)) {
         if (button_press == false) {
@@ -219,6 +226,19 @@ void practice() {
       else {
         button_press = false;
       }
+      lcd.setCursor(8, 1);
+      lcd.print("TIMER: ");
+      lcd.setCursor(15, 1);
+      lcd.print(((current + t) - millis()) / 1000);
+      Serial.println(((current + t) - millis()) / 1000);
+      if ((current + t) < millis()) {
+        Serial.println("TIMES UP");
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("RAN OUT OF TIME");
+        delay(1000);
+        break;
+      }
     }
     Serial.print("My GUESS:");
     for (int i = 0; i < n; i++) {
@@ -230,6 +250,7 @@ void practice() {
     }
     Serial.println(" ");
     if (game_over) {
+      lcd.clear();
       lcd.setBacklight(BLUE);
       lcd.setCursor(0, 0);
       lcd.print(" COPY:");
@@ -242,9 +263,7 @@ void practice() {
       lcd.print("Typed:");
       for (int i = 0; i < n; i++) {
         lcd.print(user_attempt[i]);
-        Serial.print(user_attempt[i]);
       }
-      Serial.println(" ");
       delay(4000);
       lcd.setBacklight(RED);
       lcd.clear();
@@ -252,6 +271,7 @@ void practice() {
     }
     else {
       lcd.setBacklight(GREEN);
+      lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("CORRECT!");
       delay(500);
@@ -299,10 +319,11 @@ void story() {
     }
     Serial.println(" ");
     delay(d);
+    lcd.clear();
     int get_inputs = 0;
     String user_attempt[n];
+    current = millis();
     while (get_inputs < n) {
-      lcd.clear();
       uint8_t buttons = lcd.readButtons();
       if (buttons && (mode == 2)) {
         if (button_press == false) {
@@ -328,6 +349,19 @@ void story() {
       else {
         button_press = false;
       }
+      lcd.setCursor(8, 1);
+      lcd.print("TIMER: ");
+      lcd.setCursor(15, 1);
+      lcd.print(((current + t) - millis()) / 1000);
+      Serial.println(((current + t) - millis()) / 1000);
+      if ((current + t) < millis()) {
+        Serial.println("TIMES UP");
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("RAN OUT OF TIME");
+        delay(1000);
+        break;
+      }
     }
     Serial.print("My GUESS:");
     for (int i = 0; i < n; i++) {
@@ -339,6 +373,7 @@ void story() {
     }
     Serial.println(" ");
     if (game_over) {
+      lcd.clear();
       lcd.setBacklight(RED);
       lcd.setCursor(0, 0);
       lcd.print(" COPY:");
@@ -495,9 +530,10 @@ void story() {
       mode = 0;
     }
     else {
-      lcd.setBacklight(GREEN);
       level += 1;
       score += 5;
+      lcd.clear();
+      lcd.setBacklight(GREEN);
       lcd.setCursor(0, 0);
       lcd.print("    CORRECT!    ");
       lcd.setCursor(0, 1);
@@ -506,8 +542,8 @@ void story() {
       lcd.setBacklight(BLUE);
 
       //INCREASES DIFFICULTY
-      d -= 50; //0.1 less seconds to read
-      t -= 50; //0.1 less seconds to answer
+      d -= 50; //Less seconds to read
+      t -= 50; //Less seconds to answer
       if ((level % 4) == 0) { //Every 4 levels
         n += 1; //Add 1 to sequence
       }
