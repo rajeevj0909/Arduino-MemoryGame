@@ -17,6 +17,7 @@ byte up_arrow[] = { B00100, B01110, B10101, B00100, B00100, B00100, B00100, B001
 byte down_arrow[] = { B00100, B00100, B00100, B00100, B00100, B10101, B01110, B00100 };
 byte left_arrow[] = { B00000, B00100, B01000, B11111, B11111, B01000, B00100, B00000 };
 byte right_arrow[] = { B00000, B00100, B00010, B11111, B11111, B00010, B00100, B00000 };
+//4 Quadrants for the sad face; top left, top right, bottom left, bottom right
 byte wrong_TL[] = { B11110, B00000, B01101, B01101, B00001, B00001, B00111, B00101 };
 byte wrong_TR[] = { B01111, B00000, B10110, B10110, B10000, B10000, B11100, B10100 };
 byte wrong_BL[] = { B00000, B00000, B00111, B01000, B10000, B10000, B00000, B00000 };
@@ -32,17 +33,17 @@ bool button_press = false;
 //Used for gameplay
 byte s[] = {}; //Sequence to remember
 int n = 4; //Length of sequence
-byte  m[] = {byte(0), byte(1), byte(2), byte(3)};//Choices in practice mode
+byte  m[] = {byte(0), byte(1), byte(2), byte(3)};//Choices available
 int c = 2; //Length of choices
 int d = 1000; // Time it's shown
 int t = 5000; //Seconds to answer
 bool game_over = false;//Game finished
 int username_state = 0; //Letter chosen to edit
 int username[] = {65, 65, 65}; //{A,A,A}
-long current;
+long current;//For the countdown
 
 //Used for scroll_top_row function
-int index = 0;
+int index;
 String message;
 String main_menu = ("L <---Menu---> R");
 
@@ -70,7 +71,7 @@ void menu() {
   game_over = false;
   button_press = false;
   //Buttons for menu
-  uint8_t buttons = lcd.readButtons();
+  uint8_t buttons = lcd.readButtons(); //Button for home screen
   if (buttons && (mode == 0) && (menu_state == 0)) {
     if (buttons & BUTTON_RIGHT) {
       menu_state = 1;
@@ -78,7 +79,6 @@ void menu() {
     if (buttons & BUTTON_LEFT) {
       menu_state = 4;
     }
-    button_press = true;
   }
   if (mode == 0) {
     switch (menu_state) {
@@ -91,22 +91,22 @@ void menu() {
         break;
       case (1): //Practice
         lcd.setBacklight(RED);
-        message = "  Practice Mode- Press SELECT or move on";
+        message = "Practice Mode- Press SELECT or move on";
         scroll_top_row(message, main_menu);
         break;
       case (2)://Story
         lcd.setBacklight(TEAL);
-        message = "  Story Mode- Press SELECT or move on";
+        message = "Story Mode- Press SELECT or move on";
         scroll_top_row(message, main_menu);
         break;
       case (3)://Leaderboard
         lcd.setBacklight(YELLOW);
-        message = "  Leaderboard- Press SELECT or move on";
+        message = "Leaderboard- Press SELECT or move on";
         scroll_top_row(message, main_menu);
         break;
       case (4)://Settings
         lcd.setBacklight(BLUE);
-        message = "  Settings- Press SELECT or move on";
+        message = "Settings- Press SELECT or move on";
         scroll_top_row(message, main_menu);
         break;
     }
@@ -129,9 +129,8 @@ void menu() {
   }
 }
 
-void practice() {
-  index = 0;
-  String message1 = ("   READ CODE AND REPEAT IT BACK ON ARROWS");
+void practice() { //Instructions
+  String message1 = ("READ CODE AND REPEAT IT BACK ON ARROWS");
   String message2 = ("   GOOD LUCK!   ");
   scroll_top_row(message1, message2);
   delay(1000);
@@ -139,7 +138,7 @@ void practice() {
   //GAMEPLAY
   byte s[n];
   while (game_over == false) {
-    lcd.clear();
+    lcd.clear(); //Adds random choices to sequence 
     for (int i = 0; i < n; i++) {
       long randNumber = random(300);
       if (randNumber < (300 / c)) {
@@ -154,7 +153,7 @@ void practice() {
       else if (randNumber < ((300 / c) * 4)) {
         s[i] = m[3];
       }
-    }
+    }//Displays code to remember
     lcd.setCursor(0, 0);
     for (int i = 0; i < n; i++) {
       lcd.write(s[i]);
@@ -164,7 +163,7 @@ void practice() {
     int get_inputs = 0;
     byte user_attempt[n];
     current = millis();
-    while (get_inputs < n) {
+    while (get_inputs < n) {//Allows user to type answer
       uint8_t buttons = lcd.readButtons();
       if (buttons && (mode == 1)) {
         if (button_press == false) {
@@ -189,7 +188,7 @@ void practice() {
       }
       else {
         button_press = false;
-      }
+      }//Displays time left
       lcd.setCursor(8, 1);
       lcd.print("TIMER: ");
       lcd.setCursor(15, 1);
@@ -201,7 +200,7 @@ void practice() {
         delay(1000);
         break;
       }
-    }
+    }//If the 2 lists don't match, game over
     for (int i = 0; i < n; i++) {
       if (user_attempt[i] != s[i]) {
         game_over = true;
@@ -218,7 +217,7 @@ void practice() {
       lcd.write(byte(6));
       lcd.write(byte(7));
       delay(2000);
-      lcd.clear();//Show result
+      lcd.clear();//Show results
       lcd.setCursor(0, 0);
       lcd.print(" Copy:");
       for (int i = 0; i < n; i++) {
@@ -229,7 +228,7 @@ void practice() {
       for (int i = 0; i < n; i++) {
         if ((user_attempt[i] == byte(0)) or (user_attempt[i] == byte(1)) or (user_attempt[i] == byte(2)) or (user_attempt[i] == byte(3))) {
           lcd.write(user_attempt[i]);
-        }
+        }//Else statement ends for loop when it detects no more characters in list
         else {
           break;
         }
@@ -239,7 +238,7 @@ void practice() {
       lcd.clear();
       mode = 0;
     }
-    else {
+    else {//CORRECT ANSWER
       lcd.setBacklight(GREEN);
       lcd.clear();
       lcd.setCursor(0, 0);
@@ -251,8 +250,7 @@ void practice() {
 }
 
 void story() {
-  index = 0;
-  String message1 = ("   READ+REPEAT...BE FAST!");
+  String message1 = ("READ+REPEAT...BE FAST!");
   String message2 = ("  GOOD LUCK!!!  ");
   scroll_top_row(message1, message2);
   delay(1000);
@@ -263,9 +261,8 @@ void story() {
   n = 2;//Length of sequence to start
   d = 1500; // 1.5 seconds to read
   t = 5100; //5.1 Seconds to answer
-  byte s[n];
   while (game_over == false) {
-    lcd.clear();
+    lcd.clear();// Story mode always has 4 choices
     for (int i = 0; i < n; i++) {
       long randNumber = random(300);
       if (randNumber < 75) {
@@ -280,7 +277,7 @@ void story() {
       else if (randNumber < 300) {
         s[i] = m[3];
       }
-    }
+    }//Displays message to remember
     lcd.setCursor(0, 0);
     for (int i = 0; i < n; i++) {
       lcd.write(s[i]);
@@ -315,7 +312,7 @@ void story() {
       }
       else {
         button_press = false;
-      }
+      }//Displays time left
       lcd.setCursor(8, 1);
       lcd.print("TIMER: ");
       lcd.setCursor(15, 1);
@@ -359,7 +356,7 @@ void story() {
         else {
           break;
         }
-      }
+      }//Shows the score
       delay(4000);
       lcd.clear();
       lcd.setBacklight(BLUE);
@@ -371,13 +368,13 @@ void story() {
       int leaderboard_list[20];
       for (int i = 0; i < 20; i++) {
         leaderboard_list[i] = EEPROM.read(i);
-      }
+      }//Creates a temporary leaderboard for 6 people
       int new_leaderboard[24];
       for (int i = 3; i < 20; i = i + 4) {
-        if (score > leaderboard_list[i]) {
+        if (score > leaderboard_list[i]) {//When the correct placement is found
           lcd.setCursor(0, 1);
           lcd.print("TOP 5 SCORE!!!");
-          delay(1500);
+          delay(1500);//Allows user to insert name
           username_state = 0;
           while (username_state < 5) {
             uint8_t buttons = lcd.readButtons();
@@ -452,7 +449,7 @@ void story() {
               button_press = false;
             }
             switch (username_state) {
-              case (0):
+              case (0)://First letter
                 lcd.setCursor(0, 0);
                 lcd.print("User Letter1");
                 lcd.setCursor(0, 1);
@@ -462,7 +459,7 @@ void story() {
                 lcd.setCursor(15, 1);
                 lcd.write(byte(1));
                 break;
-              case (1):
+              case (1)://Second letter
                 lcd.setCursor(0, 0);
                 lcd.print("User Letter2");
                 lcd.setCursor(0, 1);
@@ -472,7 +469,7 @@ void story() {
                 lcd.setCursor(15, 1);
                 lcd.write(byte(1));
                 break;
-              case (2):
+              case (2)://Third letter
                 lcd.setCursor(0, 0);
                 lcd.print("User Letter3");
                 lcd.setCursor(0, 1);
@@ -482,14 +479,14 @@ void story() {
                 lcd.setCursor(15, 1);
                 lcd.write(byte(1));
                 break;
-              case (3)://GO BACK
+              case (3)://Save answer
                 lcd.setCursor(0, 0);
                 lcd.print("    DONE?");
                 lcd.setCursor(0, 1);
                 lcd.print("Click left/right");
                 break;
             }
-          }
+          }//Insert old members back into leaderboard
           new_leaderboard[i - 3] = username[0];
           new_leaderboard[i - 2] = username[1];
           new_leaderboard[i - 1] = username[2];
@@ -497,7 +494,7 @@ void story() {
           for (int x = i - 3; x < 24; x++) {
             new_leaderboard[x + 4] = leaderboard_list[x];
           }
-          //Write the new leaderboard in
+          //Write the new leaderboard in memory
           for (int j = 0; j < 20; j++) {
             EEPROM.update(j, (new_leaderboard[j]));
           }
@@ -511,9 +508,9 @@ void story() {
         }
       }
       lcd.clear();
-      mode = 0;
+      mode = 0;//Go home
     }
-    else {
+    else {//Correct answer
       level += 1;
       score += 5;
       lcd.clear();
@@ -537,7 +534,7 @@ void story() {
 
 void leaderboard() {
   //Only works up to 50 levels as 5x50=250 and
-  //I can't store values larger than 255
+  //I can't store score values larger than 255
   int leaderboard_list[20];
   for (int i = 0; i < 20; i++) {
     leaderboard_list[i] = EEPROM.read(i);
@@ -575,9 +572,9 @@ void leaderboard() {
   //Leadeboard menu
   switch (leaderboard_state) {
     case (0)://1st
-      lcd.setCursor(0, 0);
+      lcd.setCursor(0, 0); //Prints the 3-letter name
       lcd.print("1st: " + String(char(leaderboard_list[0])) + String(char(leaderboard_list[1])) + String(char(leaderboard_list[2])));
-      lcd.setCursor(0, 1);
+      lcd.setCursor(0, 1); //Prints the score they got
       lcd.print("Score: " + String(leaderboard_list[3]));
       lcd.setCursor(15, 0);//Add navigation arrows
       lcd.write(byte(0));
@@ -588,7 +585,7 @@ void leaderboard() {
       lcd.setCursor(0, 0);
       lcd.print("2nd: " + String(char(leaderboard_list[4])) + String(char(leaderboard_list[5])) + String(char(leaderboard_list[6])));
       lcd.setCursor(0, 1);
-      lcd.print("Score: " + String(leaderboard_list[7]));
+      lcd.print("Score: " + String(leaderboard_list[7])); 
       lcd.setCursor(15, 0);//Add navigation arrows
       lcd.write(byte(0));
       lcd.setCursor(15, 1);
@@ -629,14 +626,14 @@ void leaderboard() {
       lcd.print(" TO GO BACK");
       lcd.setCursor(0, 1);
       lcd.print("Click left/right");
-      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.setCursor(15, 0);//Add navigation arrow
       lcd.write(byte(0));
       break;
   }
 }
 
 void settings() {
-  //Buttons for settings
+  //Includes a lot of validation for values changing
   uint8_t buttons = lcd.readButtons();
   if (buttons && (mode == 4)) {
     if (button_press == false) {
@@ -775,7 +772,7 @@ void settings() {
       lcd.print(" TO GO BACK");
       lcd.setCursor(0, 1);
       lcd.print("Click left/right");
-      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.setCursor(15, 0);//Add navigation arrow
       lcd.write(byte(0));
       break;
   }
@@ -783,7 +780,7 @@ void settings() {
 /*This function scrolls text on the top row
   while keeping the bottom row static*/
 void scroll_top_row(String top, String bottom) {
-  top = " " + top + " ";
+  top = "   " + top + " ";
   lcd.setCursor(0, 1);
   lcd.print(bottom);
   lcd.setCursor(0, 0);
