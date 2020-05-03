@@ -28,11 +28,10 @@ int menu_state = 0;
 int leaderboard_state = 0;
 int settings_state = 0;
 bool button_press = false;
-bool reload_scroll = false;
 
 //Used for gameplay
 byte s[] = {}; //Sequence to remember
-int n = 2; //Length of sequence
+int n = 4; //Length of sequence
 byte  m[] = {byte(0), byte(1), byte(2), byte(3)};//Choices in practice mode
 int c = 2; //Length of choices
 int d = 1000; // Time it's shown
@@ -70,46 +69,16 @@ void menu() {
   //RESET VARIABLES
   game_over = false;
   button_press = false;
-
   //Buttons for menu
   uint8_t buttons = lcd.readButtons();
-  if (buttons && (mode == 0)) {
-    if (button_press == false) {
-      if (buttons & BUTTON_RIGHT) {
-        menu_state += 1;
-        if (menu_state > 4) {
-          menu_state = 0;
-        }
-      }
-      if (buttons & BUTTON_LEFT) {
-        menu_state -= 1;
-        if (menu_state == (-1)) {
-          menu_state = 4;
-        }
-      }
-      if (buttons & BUTTON_SELECT) {
-        lcd.clear();
-        if (menu_state == 1) { //Practice
-          mode = 1; //practe_state
-        }
-        else if (menu_state == 2) { //Story
-          mode = 2; //story_state
-        }
-        else if (menu_state == 3) { //Leaderboard
-          mode = 3; //leaderboard_state
-          leaderboard_state = 0;
-        }
-        else if (menu_state == 4) { //Settings
-          mode = 4; //settings_state
-          settings_state = 0;
-        }
-      }
-      reload_scroll = false;
-      button_press = true;
+  if (buttons && (mode == 0) && (menu_state == 0)) {
+    if (buttons & BUTTON_RIGHT) {
+      menu_state = 1;
     }
-  }
-  else {
-    button_press = false;
+    if (buttons & BUTTON_LEFT) {
+      menu_state = 4;
+    }
+    button_press = true;
   }
   if (mode == 0) {
     switch (menu_state) {
@@ -121,40 +90,24 @@ void menu() {
         lcd.print("L <---HOME---> R");
         break;
       case (1): //Practice
-        if (reload_scroll == false) {
-          lcd.setBacklight(RED);
-          message = "Practice Mode- Press SELECT or move on";
-          scroll_top_row(message, main_menu);
-          lcd.print(" Practice Mode  ");
-          reload_scroll = true;
-        }
+        lcd.setBacklight(RED);
+        message = "  Practice Mode- Press SELECT or move on";
+        scroll_top_row(message, main_menu);
         break;
       case (2)://Story
-        if (reload_scroll == false) {
-          lcd.setBacklight(TEAL);
-          message = "Story Mode- Press SELECT or move on";
-          scroll_top_row(message, main_menu);
-          lcd.print("   Story Mode   ");
-          reload_scroll = true;
-        }
+        lcd.setBacklight(TEAL);
+        message = "  Story Mode- Press SELECT or move on";
+        scroll_top_row(message, main_menu);
         break;
       case (3)://Leaderboard
-        if (reload_scroll == false) {
-          lcd.setBacklight(YELLOW);
-          message = "  Leaderboard- Press SELECT or move on";
-          scroll_top_row(message, main_menu);
-          lcd.print("  Leaderboard   ");
-          reload_scroll = true;
-        }
+        lcd.setBacklight(YELLOW);
+        message = "  Leaderboard- Press SELECT or move on";
+        scroll_top_row(message, main_menu);
         break;
       case (4)://Settings
-        if (reload_scroll == false) {
-          lcd.setBacklight(BLUE);
-          message = "Settings- Press SELECT or move on";
-          scroll_top_row(message, main_menu);
-          lcd.print("    Settings    ");
-          reload_scroll = true;
-        }
+        lcd.setBacklight(BLUE);
+        message = "  Settings- Press SELECT or move on";
+        scroll_top_row(message, main_menu);
         break;
     }
   }
@@ -267,7 +220,7 @@ void practice() {
       delay(2000);
       lcd.clear();//Show result
       lcd.setCursor(0, 0);
-      lcd.print(" COPY:");
+      lcd.print(" Copy:");
       for (int i = 0; i < n; i++) {
         lcd.write(s[i]);
       }
@@ -309,7 +262,7 @@ void story() {
   int score = 0;
   n = 2;//Length of sequence to start
   d = 1500; // 1.5 seconds to read
-  t = 5000; //5 Seconds to answer
+  t = 5100; //5.1 Seconds to answer
   byte s[n];
   while (game_over == false) {
     lcd.clear();
@@ -393,7 +346,7 @@ void story() {
       delay(2000);
       lcd.clear();//Show result
       lcd.setCursor(0, 0);
-      lcd.print(" COPY:");
+      lcd.print(" Copy:");
       for (int i = 0; i < n; i++) {
         lcd.write(s[i]);
       }
@@ -673,9 +626,11 @@ void leaderboard() {
       break;
     case (5)://GO BACK
       lcd.setCursor(0, 0);
-      lcd.print("    GO BACK");
+      lcd.print(" TO GO BACK");
       lcd.setCursor(0, 1);
       lcd.print("Click left/right");
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
       break;
   }
 }
@@ -817,9 +772,11 @@ void settings() {
       break;
     case (5)://GO BACK
       lcd.setCursor(0, 0);
-      lcd.print("    GO BACK");
+      lcd.print(" TO GO BACK");
       lcd.setCursor(0, 1);
       lcd.print("Click left/right");
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
       break;
   }
 }
@@ -830,6 +787,7 @@ void scroll_top_row(String top, String bottom) {
   lcd.setCursor(0, 1);
   lcd.print(bottom);
   lcd.setCursor(0, 0);
+  index = 0;
   while (index < top.length()) {
     index += 1;
     lcd.setCursor(0, 1);
@@ -837,9 +795,50 @@ void scroll_top_row(String top, String bottom) {
     lcd.setCursor(0, 0);
     for (int j = index; j < top.length(); j++) {
       lcd.print(top.charAt(j));
+      //CHECK BUTTONS
+      uint8_t buttons = lcd.readButtons();
+      if (buttons && (mode == 0) && (menu_state != 0)) {
+        if (button_press == false) {
+          if (buttons & BUTTON_RIGHT) {
+            menu_state += 1;
+            if (menu_state > 4) {
+              menu_state = 0;
+            }
+          }
+          if (buttons & BUTTON_LEFT) {
+            menu_state -= 1;
+            if (menu_state == (-1)) {
+              menu_state = 4;
+            }
+          }
+          if (buttons & BUTTON_SELECT) {
+            lcd.clear();
+            if (menu_state == 1) { //Practice
+              mode = 1; //practe_state
+            }
+            else if (menu_state == 2) { //Story
+              mode = 2; //story_state
+            }
+            else if (menu_state == 3) { //Leaderboard
+              mode = 3; //leaderboard_state
+              leaderboard_state = 0;
+            }
+            else if (menu_state == 4) { //Settings
+              mode = 4; //settings_state
+              settings_state = 0;
+            }
+          }
+          button_press = true;
+          return;
+        }
+      }
+      else {
+        button_press = false;
+      }
     }
   }
 }
+
 //Run this function when setting up a new device
 void setup_leaderboard() {//Adds example values to view leaderboard if it's not been played before
   char default_leaderboard[] = {'R', 'A', 'J', 80, 'S', 'A', 'M', 60, 'A', 'M', 'Y', 50, 'B', 'E', 'N', 15, 'D', 'A', 'N', 5};
