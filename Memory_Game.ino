@@ -15,11 +15,11 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 //Custom Characters
 byte up_arrow[] = { B00100, B01110, B10101, B00100, B00100, B00100, B00100, B00100 };
 byte down_arrow[] = { B00100, B00100, B00100, B00100, B00100, B10101, B01110, B00100 };
-byte happy_face[] = { B01010, B01010, B00000, B00100, B00100, B10001, B01010, B00100 };
-byte full_block[] = { B11111, B11111, B11111, B11111, B11111, B11111, B11111, B11111 };
-byte wrong_TL[] = { B11110, B00000, B01101, B01101, B00001, B00001, B00111, B00101 }; 
-byte wrong_TR[] = { B01111, B00000, B10110, B10110, B10000, B10000, B11100, B10100 }; 
-byte wrong_BL[] = { B00000, B00000, B00111, B01000, B10000, B10000, B00000, B00000 }; 
+byte left_arrow[] = { B00000, B00100, B01000, B11111, B11111, B01000, B00100, B00000 };
+byte right_arrow[] = { B00000, B00100, B00010, B11111, B11111, B00010, B00100, B00000 };
+byte wrong_TL[] = { B11110, B00000, B01101, B01101, B00001, B00001, B00111, B00101 };
+byte wrong_TR[] = { B01111, B00000, B10110, B10110, B10000, B10000, B11100, B10100 };
+byte wrong_BL[] = { B00000, B00000, B00111, B01000, B10000, B10000, B00000, B00000 };
 byte wrong_BR[] = { B00000, B00000, B11100, B00010, B00001, B00001, B00000, B00000 };
 
 //Used for menu interaction
@@ -31,9 +31,9 @@ bool button_press = false;
 bool reload_scroll = false;
 
 //Used for gameplay
-String s[] = {}; //Sequence to remember
+byte s[] = {}; //Sequence to remember
 int n = 2; //Length of sequence
-String  m[] = {"U", "D", "L", "R"};//Choices in practice mode
+byte  m[] = {byte(0), byte(1), byte(2), byte(3)};//Choices in practice mode
 int c = 2; //Length of choices
 int d = 1000; // Time it's shown
 int t = 5000; //Seconds to answer
@@ -52,8 +52,8 @@ void setup() {
   lcd.begin(16, 2);
   lcd.createChar(0, up_arrow);
   lcd.createChar(1, down_arrow);
-  lcd.createChar(2, happy_face);
-  lcd.createChar(3, full_block);
+  lcd.createChar(2, left_arrow);
+  lcd.createChar(3, right_arrow);
   lcd.createChar(4, wrong_TL);
   lcd.createChar(5, wrong_TR);
   lcd.createChar(6, wrong_BL);
@@ -184,7 +184,7 @@ void practice() {
   delay(1000);
 
   //GAMEPLAY
-  String s[n];
+  byte s[n];
   while (game_over == false) {
     lcd.clear();
     for (int i = 0; i < n; i++) {
@@ -204,7 +204,7 @@ void practice() {
     }
     lcd.setCursor(0, 0);
     for (int i = 0; i < n; i++) {
-      lcd.print(s[i]);
+      lcd.write(s[i]);
       Serial.print(s[i]);
     }
     Serial.println(" ");
@@ -213,26 +213,26 @@ void practice() {
     delay(d);
     lcd.clear();
     int get_inputs = 0;
-    String user_attempt[n];
+    byte user_attempt[n];
     current = millis();
     while (get_inputs < n) {
       uint8_t buttons = lcd.readButtons();
       if (buttons && (mode == 1)) {
         if (button_press == false) {
           if (buttons & BUTTON_UP) {
-            user_attempt[get_inputs] = "U";
+            user_attempt[get_inputs] = byte(0);
             get_inputs += 1;
           }
           if (buttons & BUTTON_DOWN) {
-            user_attempt[get_inputs] = "D";
+            user_attempt[get_inputs] = byte(1);
             get_inputs += 1;
           }
           if (buttons & BUTTON_LEFT) {
-            user_attempt[get_inputs] = "L";
+            user_attempt[get_inputs] = byte(2);
             get_inputs += 1;
           }
           if (buttons & BUTTON_RIGHT) {
-            user_attempt[get_inputs] = "R";
+            user_attempt[get_inputs] = byte(3);
             get_inputs += 1;
           }
           button_press = true;
@@ -272,19 +272,24 @@ void practice() {
       lcd.setCursor(7, 1);
       lcd.write(byte(6));
       lcd.write(byte(7));
-      delay(3000);
+      delay(2000);
       lcd.clear();//Show result
       lcd.setCursor(0, 0);
       lcd.print(" COPY:");
       for (int i = 0; i < n; i++) {
-        lcd.print(s[i]);
+        lcd.write(s[i]);
         Serial.print(s[i]);
       }
       Serial.println(" ");
       lcd.setCursor(0, 1);
       lcd.print("Typed:");
       for (int i = 0; i < n; i++) {
-        lcd.print(user_attempt[i]);
+        if ((user_attempt[i] == byte(0)) or (user_attempt[i] == byte(1)) or (user_attempt[i] == byte(2)) or (user_attempt[i] == byte(3))) {
+          lcd.write(user_attempt[i]);
+        }
+        else {
+          break;
+        }
       }
       delay(4000);
       lcd.setBacklight(RED);
@@ -313,10 +318,9 @@ void story() {
   int level = 1;
   int score = 0;
   n = 2;//Length of sequence to start
-  String  m[] = {"U", "D", "L", "R"}; //All choices available
   d = 1500; // 1.5 seconds to read
   t = 5000; //5 Seconds to answer
-  String s[n];
+  byte s[n];
   while (game_over == false) {
     lcd.clear();
     for (int i = 0; i < n; i++) {
@@ -336,33 +340,33 @@ void story() {
     }
     lcd.setCursor(0, 0);
     for (int i = 0; i < n; i++) {
-      lcd.print(s[i]);
+      lcd.write(s[i]);
       Serial.print(s[i]);
     }
     Serial.println(" ");
     delay(d);
     lcd.clear();
     int get_inputs = 0;
-    String user_attempt[n];
+    byte user_attempt[n];
     current = millis();
     while (get_inputs < n) {
       uint8_t buttons = lcd.readButtons();
       if (buttons && (mode == 2)) {
         if (button_press == false) {
           if (buttons & BUTTON_UP) {
-            user_attempt[get_inputs] = "U";
+            user_attempt[get_inputs] = byte(0);
             get_inputs += 1;
           }
           if (buttons & BUTTON_DOWN) {
-            user_attempt[get_inputs] = "D";
+            user_attempt[get_inputs] = byte(1);
             get_inputs += 1;
           }
           if (buttons & BUTTON_LEFT) {
-            user_attempt[get_inputs] = "L";
+            user_attempt[get_inputs] = byte(2);
             get_inputs += 1;
           }
           if (buttons & BUTTON_RIGHT) {
-            user_attempt[get_inputs] = "R";
+            user_attempt[get_inputs] = byte(3);
             get_inputs += 1;
           }
           button_press = true;
@@ -402,20 +406,24 @@ void story() {
       lcd.setCursor(7, 1);
       lcd.write(byte(6));
       lcd.write(byte(7));
-      delay(3000);
+      delay(2000);
       lcd.clear();//Show result
       lcd.setCursor(0, 0);
       lcd.print(" COPY:");
       for (int i = 0; i < n; i++) {
-        lcd.print(s[i]);
+        lcd.write(s[i]);
         Serial.print(s[i]);
       }
       Serial.println(" ");
       lcd.setCursor(0, 1);
       lcd.print("Typed:");
       for (int i = 0; i < n; i++) {
-        lcd.print(user_attempt[i]);
-        Serial.print(user_attempt[i]);
+        if ((user_attempt[i] == byte(0)) or (user_attempt[i] == byte(1)) or (user_attempt[i] == byte(2)) or (user_attempt[i] == byte(3))) {
+          lcd.write(user_attempt[i]);
+        }
+        else {
+          break;
+        }
       }
       Serial.println(" ");
       delay(4000);
@@ -512,21 +520,33 @@ void story() {
             switch (username_state) {
               case (0):
                 lcd.setCursor(0, 0);
-                lcd.print("Username Letter1");
+                lcd.print("User Letter1");
                 lcd.setCursor(0, 1);
                 lcd.print("- <--" + String(char(username[0])) + "--> +");
+                lcd.setCursor(15, 0);//Add navigation arrows
+                lcd.write(byte(0));
+                lcd.setCursor(15, 1);
+                lcd.write(byte(1));
                 break;
               case (1):
                 lcd.setCursor(0, 0);
-                lcd.print("Username Letter2");
+                lcd.print("User Letter2");
                 lcd.setCursor(0, 1);
                 lcd.print("- <--" + String(char(username[1])) + "--> +");
+                lcd.setCursor(15, 0);//Add navigation arrows
+                lcd.write(byte(0));
+                lcd.setCursor(15, 1);
+                lcd.write(byte(1));
                 break;
               case (2):
                 lcd.setCursor(0, 0);
-                lcd.print("Username Letter3");
+                lcd.print("User Letter3");
                 lcd.setCursor(0, 1);
                 lcd.print("- <--" + String(char(username[2])) + "--> +");
+                lcd.setCursor(15, 0);//Add navigation arrows
+                lcd.write(byte(0));
+                lcd.setCursor(15, 1);
+                lcd.write(byte(1));
                 break;
               case (3)://GO BACK
                 lcd.setCursor(0, 0);
@@ -628,30 +648,50 @@ void leaderboard() {
       lcd.print("1st: " + String(char(leaderboard_list[0])) + String(char(leaderboard_list[1])) + String(char(leaderboard_list[2])));
       lcd.setCursor(0, 1);
       lcd.print("Score: " + String(leaderboard_list[3]));
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
     case (1): //2nd
       lcd.setCursor(0, 0);
       lcd.print("2nd: " + String(char(leaderboard_list[4])) + String(char(leaderboard_list[5])) + String(char(leaderboard_list[6])));
       lcd.setCursor(0, 1);
       lcd.print("Score: " + String(leaderboard_list[7]));
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
     case (2)://3rd
       lcd.setCursor(0, 0);
       lcd.print("3rd: " + String(char(leaderboard_list[8])) + String(char(leaderboard_list[9])) + String(char(leaderboard_list[10])));
       lcd.setCursor(0, 1);
       lcd.print("Score: " + String(leaderboard_list[11]));
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
     case (3)://4th
       lcd.setCursor(0, 0);
       lcd.print("4th: " + String(char(leaderboard_list[12])) + String(char(leaderboard_list[13])) + String(char(leaderboard_list[14])));
       lcd.setCursor(0, 1);
       lcd.print("Score: " + String(leaderboard_list[15]));
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
     case (4)://5th
       lcd.setCursor(0, 0);
       lcd.print("5th: " + String(char(leaderboard_list[16])) + String(char(leaderboard_list[17])) + String(char(leaderboard_list[18])));
       lcd.setCursor(0, 1);
       lcd.print("Score: " + String(leaderboard_list[19]));
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
     case (5)://GO BACK
       lcd.setCursor(0, 0);
@@ -749,33 +789,53 @@ void settings() {
   switch (settings_state) {
     case (0): //SETTINGS
       lcd.setCursor(0, 0);
-      lcd.print("   Settings   ");
+      lcd.print("   Settings");
       lcd.setCursor(0, 1);
       lcd.print("ALTER PRACTICE");
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
     case (1): //Length of S
       lcd.setCursor(0, 0);
       lcd.print("Sequence Length");
       lcd.setCursor(0, 1);
-      lcd.print("- <--" + String(n) + "--> +");
+      lcd.print("- <---" + String(n) + "---> +");
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
     case (2)://No. Of Choices
       lcd.setCursor(0, 0);
       lcd.print("Choices Length");
       lcd.setCursor(0, 1);
-      lcd.print("- <--" + String(c) + "--> +");
+      lcd.print("- <---" + String(c) + "---> + ");
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
     case (3)://Delay to view in milliseconds
       lcd.setCursor(0, 0);
       lcd.print("     Delay    ");
       lcd.setCursor(0, 1);
-      lcd.print("- <--" + String(d) + "--> +");
+      lcd.print("- <--" + String(d) + "--> + ");
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
     case (4)://Countdown for user in milliseconds
       lcd.setCursor(0, 0);
       lcd.print("   Countdown  ");
       lcd.setCursor(0, 1);
-      lcd.print("- <--" + String(t) + "--> +");
+      lcd.print("- <--" + String(t) + "--> + ");
+      lcd.setCursor(15, 0);//Add navigation arrows
+      lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
     case (5)://GO BACK
       lcd.setCursor(0, 0);
