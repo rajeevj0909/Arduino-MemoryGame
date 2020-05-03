@@ -205,11 +205,7 @@ void practice() {
     lcd.setCursor(0, 0);
     for (int i = 0; i < n; i++) {
       lcd.write(s[i]);
-      Serial.print(s[i]);
     }
-    Serial.println(" ");
-    Serial.println(d);
-    Serial.println(t);
     delay(d);
     lcd.clear();
     int get_inputs = 0;
@@ -246,7 +242,6 @@ void practice() {
       lcd.setCursor(15, 1);
       lcd.print(((current + t) - millis()) / 1000);
       if ((current + t) < millis()) {
-        Serial.println("TIMES UP");
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("RAN OUT OF TIME");
@@ -254,15 +249,12 @@ void practice() {
         break;
       }
     }
-    Serial.print("My GUESS:");
     for (int i = 0; i < n; i++) {
-      Serial.print(user_attempt[i]);
       if (user_attempt[i] != s[i]) {
         game_over = true;
         break;
       }
     }
-    Serial.println(" ");
     if (game_over) {
       lcd.setBacklight(BLUE);
       lcd.clear();//Draw sad face
@@ -278,9 +270,7 @@ void practice() {
       lcd.print(" COPY:");
       for (int i = 0; i < n; i++) {
         lcd.write(s[i]);
-        Serial.print(s[i]);
       }
-      Serial.println(" ");
       lcd.setCursor(0, 1);
       lcd.print("Typed:");
       for (int i = 0; i < n; i++) {
@@ -300,7 +290,7 @@ void practice() {
       lcd.setBacklight(GREEN);
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("CORRECT!");
+      lcd.print("    CORRECT!    ");
       delay(500);
       lcd.setBacklight(RED);
     }
@@ -341,9 +331,7 @@ void story() {
     lcd.setCursor(0, 0);
     for (int i = 0; i < n; i++) {
       lcd.write(s[i]);
-      Serial.print(s[i]);
     }
-    Serial.println(" ");
     delay(d);
     lcd.clear();
     int get_inputs = 0;
@@ -380,7 +368,6 @@ void story() {
       lcd.setCursor(15, 1);
       lcd.print(((current + t) - millis()) / 1000);
       if ((current + t) < millis()) {
-        Serial.println("TIMES UP");
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("RAN OUT OF TIME");
@@ -388,15 +375,12 @@ void story() {
         break;
       }
     }
-    Serial.print("My GUESS:");
     for (int i = 0; i < n; i++) {
-      Serial.print(user_attempt[i]);
       if (user_attempt[i] != s[i]) {
         game_over = true;
         break;
       }
     }
-    Serial.println(" ");
     if (game_over) {
       lcd.setBacklight(RED);
       lcd.clear();//Draw sad face
@@ -412,9 +396,7 @@ void story() {
       lcd.print(" COPY:");
       for (int i = 0; i < n; i++) {
         lcd.write(s[i]);
-        Serial.print(s[i]);
       }
-      Serial.println(" ");
       lcd.setCursor(0, 1);
       lcd.print("Typed:");
       for (int i = 0; i < n; i++) {
@@ -425,7 +407,6 @@ void story() {
           break;
         }
       }
-      Serial.println(" ");
       delay(4000);
       lcd.clear();
       lcd.setBacklight(BLUE);
@@ -447,7 +428,7 @@ void story() {
           username_state = 0;
           while (username_state < 5) {
             uint8_t buttons = lcd.readButtons();
-            if (buttons) {
+            if (buttons && (mode == 2)) {
               if (button_press == false) {
                 if (buttons & BUTTON_DOWN) {
                   username_state += 1;
@@ -459,8 +440,8 @@ void story() {
                 if (buttons & BUTTON_UP) {
                   username_state -= 1;
                   lcd.clear();
-                  if (username_state == 0) {
-                    username_state = 4;
+                  if (username_state == (-1)) {
+                    username_state = 3;
                   }
                 }
                 if (buttons & BUTTON_RIGHT) {
@@ -597,9 +578,6 @@ void story() {
       if ((level % 4) == 0) { //Every 4 levels
         n += 1; //Add 1 to sequence
       }
-      Serial.println(d);
-      Serial.println(t);
-      Serial.println(n);
     }
   }
 }
