@@ -67,18 +67,23 @@ void loop() {
 }
 
 void menu() {
-  //RESET VARIABLES
+  //Reset game
   game_over = false;
-  button_press = false;
   //Buttons for menu
   uint8_t buttons = lcd.readButtons(); //Button for home screen
   if (buttons && (mode == 0) && (menu_state == 0)) {
-    if (buttons & BUTTON_RIGHT) {
-      menu_state = 1;
+    if (button_press == false) {
+      if (buttons & BUTTON_RIGHT) {
+        menu_state = 1;
+      }
+      if (buttons & BUTTON_LEFT) {
+        menu_state = 4;
+      }
+      button_press = true;
     }
-    if (buttons & BUTTON_LEFT) {
-      menu_state = 4;
-    }
+  }
+  else {
+    button_press = false;
   }
   if (mode == 0) {
     switch (menu_state) {
@@ -138,7 +143,7 @@ void practice() { //Instructions
   //GAMEPLAY
   byte s[n];
   while (game_over == false) {
-    lcd.clear(); //Adds random choices to sequence 
+    lcd.clear(); //Adds random choices to sequence
     for (int i = 0; i < n; i++) {
       long randNumber = random(300);
       if (randNumber < (300 / c)) {
@@ -427,8 +432,8 @@ void story() {
                     }
                   }
                   else if (username_state == 1) {
-                    username[1] += 1;
-                    if (username[1] > 65) {
+                    username[1] -= 1;
+                    if (username[1] < 65) {
                       username[1] = 90;
                     }
                   }
@@ -535,7 +540,7 @@ void story() {
 void leaderboard() {
   //Only works up to 50 levels as 5x50=250 and
   //I can't store score values larger than 255
-  int leaderboard_list[20];
+  int leaderboard_list[20];//Stores the 5 players info
   for (int i = 0; i < 20; i++) {
     leaderboard_list[i] = EEPROM.read(i);
   }
@@ -585,7 +590,7 @@ void leaderboard() {
       lcd.setCursor(0, 0);
       lcd.print("2nd: " + String(char(leaderboard_list[4])) + String(char(leaderboard_list[5])) + String(char(leaderboard_list[6])));
       lcd.setCursor(0, 1);
-      lcd.print("Score: " + String(leaderboard_list[7])); 
+      lcd.print("Score: " + String(leaderboard_list[7]));
       lcd.setCursor(15, 0);//Add navigation arrows
       lcd.write(byte(0));
       lcd.setCursor(15, 1);
