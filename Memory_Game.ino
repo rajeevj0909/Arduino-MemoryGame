@@ -418,9 +418,6 @@ void story() {//Title screen
                       username[2] = 65;
                     }
                   }
-                  else if (username_state == 3) {
-                    username_state = 5;
-                  }
                 }
                 if (buttons & BUTTON_LEFT) {
                   lcd.clear();
@@ -442,9 +439,9 @@ void story() {//Title screen
                       username[2] = 90;
                     }
                   }
-                  else if (username_state == 3) {
-                    username_state = 5;
-                  }
+                }
+                if ((buttons & BUTTON_SELECT) && (username_state == 3)) { //Go back
+                  username_state = 5;
                 }
                 button_press = true;
               }
@@ -455,7 +452,7 @@ void story() {//Title screen
             switch (username_state) {
               case (0)://First letter
                 lcd.setCursor(0, 0);
-                lcd.print("User Letter1");
+                lcd.print("User Letter 1");
                 lcd.setCursor(0, 1);
                 lcd.print("- <--" + String(char(username[0])) + "--> +");
                 lcd.setCursor(15, 0);//Add navigation arrows
@@ -465,7 +462,7 @@ void story() {//Title screen
                 break;
               case (1)://Second letter
                 lcd.setCursor(0, 0);
-                lcd.print("User Letter2");
+                lcd.print("User Letter 2");
                 lcd.setCursor(0, 1);
                 lcd.print("- <--" + String(char(username[1])) + "--> +");
                 lcd.setCursor(15, 0);//Add navigation arrows
@@ -475,7 +472,7 @@ void story() {//Title screen
                 break;
               case (2)://Third letter
                 lcd.setCursor(0, 0);
-                lcd.print("User Letter3");
+                lcd.print("User Letter 3");
                 lcd.setCursor(0, 1);
                 lcd.print("- <--" + String(char(username[2])) + "--> +");
                 lcd.setCursor(15, 0);//Add navigation arrows
@@ -487,7 +484,11 @@ void story() {//Title screen
                 lcd.setCursor(0, 0);
                 lcd.print("    DONE?");
                 lcd.setCursor(0, 1);
-                lcd.print("Click left/right");
+                lcd.print("Click SELECT");
+                lcd.setCursor(15, 0);//Add navigation arrows
+                lcd.write(byte(0));
+                lcd.setCursor(15, 1);
+                lcd.write(byte(1));
                 break;
             }
           }//Insert old members back into leaderboard after
@@ -561,11 +562,9 @@ void leaderboard() {
           leaderboard_state = 5;
         }
       }
-      if ((buttons & BUTTON_LEFT) or (buttons & BUTTON_RIGHT)) {
-        if (leaderboard_state == 5) {//Go back
-          lcd.clear();
-          mode = 0;
-        }
+      if ((buttons & BUTTON_SELECT) && (leaderboard_state == 5)) {//Go back
+        lcd.clear();
+        mode = 0;
       }
       button_press = true;
     }
@@ -629,9 +628,11 @@ void leaderboard() {
       lcd.setCursor(0, 0);
       lcd.print(" TO GO BACK");
       lcd.setCursor(0, 1);
-      lcd.print("Click left/right");
+      lcd.print("Click SELECT");
       lcd.setCursor(15, 0);//Add navigation arrow
       lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
   }
 }
@@ -680,9 +681,6 @@ void settings() {
             t = 8000;
           }
         }
-        else if (settings_state == 5) {
-          mode = 0;
-        }
       }
       if (buttons & BUTTON_LEFT) {
         if (settings_state == 1) {
@@ -709,9 +707,10 @@ void settings() {
             t = 200;
           }
         }
-        else if (settings_state == 5) {
-          mode = 0;
-        }
+      }
+      if ((buttons & BUTTON_SELECT) && (settings_state == 5)) { //Go back
+        lcd.clear();
+        mode = 0;
       }
       button_press = true;
     }
@@ -775,9 +774,11 @@ void settings() {
       lcd.setCursor(0, 0);
       lcd.print(" TO GO BACK");
       lcd.setCursor(0, 1);
-      lcd.print("Click left/right");
+      lcd.print("Click SELECT");
       lcd.setCursor(15, 0);//Add navigation arrow
       lcd.write(byte(0));
+      lcd.setCursor(15, 1);
+      lcd.write(byte(1));
       break;
   }
 }
