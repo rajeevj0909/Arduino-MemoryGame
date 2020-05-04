@@ -59,7 +59,7 @@ void setup() {
   lcd.createChar(6, wrong_BL);
   lcd.createChar(7, wrong_BR);
   randomSeed(analogRead(0));
-  //setup_leaderboard(); //Run with this line if it's a new arduino
+  //setup_leaderboard(); //Run with this line to setup arduino
 }
 
 void loop() {
