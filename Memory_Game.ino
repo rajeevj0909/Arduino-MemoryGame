@@ -59,7 +59,7 @@ void setup() {
   lcd.createChar(6, wrong_BL);
   lcd.createChar(7, wrong_BR);
   randomSeed(analogRead(0));
-  //setup_leaderboard(); //Run this line if it's a new arduino
+  //setup_leaderboard(); //Run with this line if it's a new arduino
 }
 
 void loop() {
@@ -71,12 +71,13 @@ void menu() {
   game_over = false;
   //Buttons for menu
   uint8_t buttons = lcd.readButtons(); //Button for home screen
+  //These buttons operate when on home screen
   if (buttons && (mode == 0) && (menu_state == 0)) {
     if (button_press == false) {
-      if (buttons & BUTTON_RIGHT) {
+      if (buttons & BUTTON_RIGHT) {//Go to practice
         menu_state = 1;
       }
-      if (buttons & BUTTON_LEFT) {
+      if (buttons & BUTTON_LEFT) {//Go to settings
         menu_state = 4;
       }
       button_press = true;
@@ -85,52 +86,50 @@ void menu() {
   else {
     button_press = false;
   }
-  if (mode == 0) {
-    switch (menu_state) {
-      case (0): //HOME
-        lcd.setBacklight(GREEN);
-        lcd.setCursor(0, 0);
-        lcd.print("  Memory Game   ");
-        lcd.setCursor(0, 1);
-        lcd.print("L <---HOME---> R");
-        break;
-      case (1): //Practice
-        lcd.setBacklight(RED);
-        message = "Practice Mode- Press SELECT or move on";
-        scroll_top_row(message, main_menu);
-        break;
-      case (2)://Story
-        lcd.setBacklight(TEAL);
-        message = "Story Mode- Press SELECT or move on";
-        scroll_top_row(message, main_menu);
-        break;
-      case (3)://Leaderboard
-        lcd.setBacklight(YELLOW);
-        message = "Leaderboard- Press SELECT or move on";
-        scroll_top_row(message, main_menu);
-        break;
-      case (4)://Settings
-        lcd.setBacklight(BLUE);
-        message = "Settings- Press SELECT or move on";
-        scroll_top_row(message, main_menu);
-        break;
-    }
-  }
-  else {
-    switch (mode) {
-      case 1:
-        practice();
-        break;
-      case 2:
-        story();
-        break;
-      case 3:
-        leaderboard();
-        break;
-      case 4:
-        settings();
-        break;
-    }
+  switch (mode) {
+    case 0://Menu
+      switch (menu_state) {
+        case (0): //HOME Screen
+          lcd.setBacklight(GREEN);
+          lcd.setCursor(0, 0);
+          lcd.print("  Memory Game   ");
+          lcd.setCursor(0, 1);
+          lcd.print("L <---HOME---> R");
+          break;
+        case (1): //Practice
+          lcd.setBacklight(RED);
+          message = "Practice Mode- Press SELECT or move on";
+          scroll_top_row(message, main_menu);
+          break;
+        case (2)://Story
+          lcd.setBacklight(TEAL);
+          message = "Story Mode- Press SELECT or move on";
+          scroll_top_row(message, main_menu);
+          break;
+        case (3)://Leaderboard
+          lcd.setBacklight(YELLOW);
+          message = "Leaderboard- Press SELECT or move on";
+          scroll_top_row(message, main_menu);
+          break;
+        case (4)://Settings
+          lcd.setBacklight(BLUE);
+          message = "Settings- Press SELECT or move on";
+          scroll_top_row(message, main_menu);
+          break;
+      }
+      break;
+    case 1:
+      practice();
+      break;
+    case 2:
+      story();
+      break;
+    case 3:
+      leaderboard();
+      break;
+    case 4:
+      settings();
+      break;
   }
 }
 
@@ -159,12 +158,12 @@ void practice() { //Instructions
         s[i] = m[3];
       }
     }//Displays code to remember
-    lcd.setCursor(0, 0);
     for (int i = 0; i < n; i++) {
+      lcd.setCursor(i, 0);
       lcd.write(s[i]);
+      delay(d);
+      lcd.clear();
     }
-    delay(d);
-    lcd.clear();
     int get_inputs = 0;
     byte user_attempt[n];
     current = millis();
@@ -193,12 +192,12 @@ void practice() { //Instructions
       }
       else {
         button_press = false;
-      }//Displays time left
+      }//Displays time left during game
       lcd.setCursor(8, 1);
       lcd.print("TIMER: ");
       lcd.setCursor(15, 1);
       lcd.print(((current + t) - millis()) / 1000);
-      if ((current + t) < millis()) {
+      if ((current + t) < millis()) {//End of time
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("RAN OUT OF TIME");
@@ -254,7 +253,7 @@ void practice() { //Instructions
   }
 }
 
-void story() {
+void story() {//Title screen
   String message1 = ("READ+REPEAT...BE FAST!");
   String message2 = ("  GOOD LUCK!!!  ");
   scroll_top_row(message1, message2);
@@ -264,7 +263,7 @@ void story() {
   int level = 1;
   int score = 0;
   n = 2;//Length of sequence to start
-  d = 1500; // 1.5 seconds to read
+  d = 1300; // 1.3 seconds to read
   t = 5100; //5.1 Seconds to answer
   while (game_over == false) {
     lcd.clear();// Story mode always has 4 choices
@@ -283,12 +282,12 @@ void story() {
         s[i] = m[3];
       }
     }//Displays message to remember
-    lcd.setCursor(0, 0);
     for (int i = 0; i < n; i++) {
+      lcd.setCursor(i, 0);
       lcd.write(s[i]);
-    }
-    delay(d);
-    lcd.clear();
+      delay(d);
+      lcd.clear();
+    }//Gets user inputs
     int get_inputs = 0;
     byte user_attempt[n];
     current = millis();
@@ -322,14 +321,14 @@ void story() {
       lcd.print("TIMER: ");
       lcd.setCursor(15, 1);
       lcd.print(((current + t) - millis()) / 1000);
-      if ((current + t) < millis()) {
+      if ((current + t) < millis()) {//End of time
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("RAN OUT OF TIME");
         delay(1000);
         break;
       }
-    }
+    }//If the answers don't match
     for (int i = 0; i < n; i++) {
       if (user_attempt[i] != s[i]) {
         game_over = true;
@@ -369,7 +368,7 @@ void story() {
       lcd.print("SCORE: " + String(score));
       delay(1500);
 
-      //Update Leaderboard
+      //UPDATE LEADERBOARD SECTION
       int leaderboard_list[20];
       for (int i = 0; i < 20; i++) {
         leaderboard_list[i] = EEPROM.read(i);
@@ -379,7 +378,7 @@ void story() {
         if (score > leaderboard_list[i]) {//When the correct placement is found
           lcd.setCursor(0, 1);
           lcd.print("TOP 5 SCORE!!!");
-          delay(1500);//Allows user to insert name
+          delay(1500);//Allows user to insert name in that point
           username_state = 0;
           while (username_state < 5) {
             uint8_t buttons = lcd.readButtons();
@@ -491,7 +490,7 @@ void story() {
                 lcd.print("Click left/right");
                 break;
             }
-          }//Insert old members back into leaderboard
+          }//Insert old members back into leaderboard after
           new_leaderboard[i - 3] = username[0];
           new_leaderboard[i - 2] = username[1];
           new_leaderboard[i - 1] = username[2];
@@ -505,7 +504,7 @@ void story() {
           }
           break;
         }
-        else { //Copy single entry from old leaderboard to new
+        else { //Copy single entries from old leaderboard to new
           new_leaderboard[i - 3] = leaderboard_list[i - 3];
           new_leaderboard[i - 2] = leaderboard_list[i - 2];
           new_leaderboard[i - 1] = leaderboard_list[i - 1];
@@ -548,14 +547,14 @@ void leaderboard() {
   uint8_t buttons = lcd.readButtons();
   if (buttons && (mode == 3)) {
     if (button_press == false) {
-      if (buttons & BUTTON_DOWN) {
+      if (buttons & BUTTON_DOWN) {//Scroll down
         leaderboard_state += 1;
         lcd.clear();
         if (leaderboard_state > 5) {
           leaderboard_state = 0;
         }
       }
-      if (buttons & BUTTON_UP) {
+      if (buttons & BUTTON_UP) {//Scroll Up
         leaderboard_state -= 1;
         lcd.clear();
         if (leaderboard_state < 0) {
@@ -563,7 +562,7 @@ void leaderboard() {
         }
       }
       if ((buttons & BUTTON_LEFT) or (buttons & BUTTON_RIGHT)) {
-        if (leaderboard_state == 5) {
+        if (leaderboard_state == 5) {//Go back
           lcd.clear();
           mode = 0;
         }
@@ -638,7 +637,7 @@ void leaderboard() {
 }
 
 void settings() {
-  //Includes a lot of validation for values changing
+  //Includes a lot of validation for value's min & max
   uint8_t buttons = lcd.readButtons();
   if (buttons && (mode == 4)) {
     if (button_press == false) {
@@ -799,6 +798,7 @@ void scroll_top_row(String top, String bottom) {
       lcd.print(top.charAt(j));
       //CHECK BUTTONS
       uint8_t buttons = lcd.readButtons();
+      //These buttons operate when navigating the menu
       if (buttons && (mode == 0) && (menu_state != 0)) {
         if (button_press == false) {
           if (buttons & BUTTON_RIGHT) {
